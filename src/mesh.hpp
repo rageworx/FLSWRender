@@ -6,15 +6,15 @@
 
 struct Mesh
 {
-	size_t numVertex;
-	size_t numFaces;
+    size_t numVertex;
+    size_t numFaces;
     
-	std::vector<vec3f> vertexs;
-	std::vector<vec3f> vertexTextures;
-	std::vector<vec3f> vertexsNormal;
-	std::vector<vec3i> faceVertexIndex;
-	std::vector<vec3i> faceTextureIndex;
-	std::vector<vec3i> faceNormalIndex;
+    std::vector<vec3f> vertexs;
+    std::vector<vec3f> vertexTextures;
+    std::vector<vec3f> vertexsNormal;
+    std::vector<vec3i> faceVertexIndex;
+    std::vector<vec3i> faceTextureIndex;
+    std::vector<vec3i> faceNormalIndex;
 };
 
 namespace ObjParser

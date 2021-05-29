@@ -3,10 +3,37 @@
 #include <omp.h>
 #endif
 
+#include "mesh.hpp"
+#include "shader.hpp"
+#include "texture.hpp"
+
+class renderContext
+{
+    public:
+        renderContext()
+            : img(NULL), zbuffer(NULL), mesh(NULL), texture(NULL) {};
+        ~renderContext() {};
+
+    public:
+        Fl_RGB_Image*   img;
+        float*          zbuffer;
+        Mesh*           mesh;
+        Texture*        texture;
+
+    public:
+        void  clearBuffer();
+        void  rasterizeTriangle(vec4f SV_Vertexs[3],Shader& shader);
+        vec3f barycentric(vec2f A,vec2f B,vec2f C,vec2f P);
+        inline \
+        void  setPixel(const int& x,const int& y,const Color& col);
+        void  drawLine(const vec2i& p0,const vec2i& p1,const Color& col);
+};
+
+#define TORCTX(_x_) renderContext* _x_ = (renderContext*)ctx
+
 FLSWRenderer::FLSWRenderer( Fl_RGB_Image* target )
  : rtarget( target ),
-   texture( NULL ),
-   mesh( NULL )
+   ctx( NULL )
 {
     if ( rtarget != NULL )
     {
@@ -16,84 +43,119 @@ FLSWRenderer::FLSWRenderer( Fl_RGB_Image* target )
             rtarget = NULL;
         }
     }
-    
+
+    // setup context.
+    renderContext* rctx = new renderContext();
+    if ( rctx != NULL )
+    {
+        rctx->img = rtarget;
+        ctx = (void*)rctx;
+    }
+
     init();
+}
+        
+FLSWRenderer::~FLSWRenderer() 
+{ 
+    deinit(); 
+
+    TORCTX( rctx );
+    if ( rctx != NULL )
+    {
+        ctx = NULL;
+        delete rctx;
+    }
 }
 
 bool FLSWRenderer::LoadObjects( const char* objfn )
 {
-    if ( mesh == NULL )
+    TORCTX( rctx );
+
+    if ( rctx != NULL )
     {
-        mesh = new Mesh();
-    }
-    
-    if ( mesh != NULL )
-    {
-        if ( ObjParser::ParseMesh( objfn, mesh ) == true )
+        if ( rctx->mesh == NULL )
         {
-            return true;
+            rctx->mesh = new Mesh();
         }
         
-        delete mesh;
-        mesh = NULL;        
+        if ( rctx->mesh != NULL )
+        {
+            if ( ObjParser::ParseMesh( objfn, rctx->mesh ) == true )
+            {
+                return true;
+            }
+            
+            delete rctx->mesh;
+            rctx->mesh = NULL;        
+        }
     }
-    
     return false;
 }
 
 bool FLSWRenderer::LoadObjectsIndir( const char* objdata, size_t datalen )
 {
-    if ( mesh == NULL )
+    TORCTX( rctx );
+
+    if ( rctx != NULL )
     {
-        mesh = new Mesh();
-    }
-    
-    if ( mesh != NULL )
-    {
-        if ( ObjParser::ParseMesh( objdata, datalen, mesh ) == true )
+        if ( rctx->mesh == NULL )
         {
-            return true;
+            rctx->mesh = new Mesh();
         }
         
-        delete mesh;
-        mesh = NULL;
+        if ( rctx->mesh != NULL )
+        {
+            if ( ObjParser::ParseMesh( objdata, datalen, rctx->mesh ) == true )
+            {
+                return true;
+            }
+            
+            delete rctx->mesh;
+            rctx->mesh = NULL;
+        }
     }
-    
     return false;
 }
 
 bool FLSWRenderer::FLSWRenderer::LoadTexture( const char* txtfn )
 {
-    if ( texture == NULL )
+    TORCTX( rctx );
+
+    if ( rctx != NULL )
     {
-        texture = new Texture( txtfn );
-    }
-    else
-    {
-        delete texture;
+        if ( rctx->texture == NULL )
+        {
+            rctx->texture = new Texture( txtfn );
+        }
+        else
+        {
+            delete rctx->texture;
+            
+            rctx->texture = new Texture( txtfn );
+        }
         
-        texture = new Texture( txtfn );
-    }
-    
-    if ( texture != NULL )
-        if ( texture->size() > 0 )
-            return true;
-    
+        if ( rctx->texture != NULL )
+            if ( rctx->texture->size() > 0 )
+                return true;
+    }       
     return false;
 }
 
-bool FLSWRenderer::LoadTexture( Fl_RGB_Image* texture )
+bool FLSWRenderer::LoadTexture( Fl_RGB_Image* img )
 {
+    TORCTX( rctx );
     return false;
 }
 
 void FLSWRenderer::init()
 {
-    if ( rtarget != NULL )
+    TORCTX( rctx );
+    
+    if ( ( rtarget != NULL ) && ( rctx != NULL ) )
     {
         if ( ( rtarget->w() > 0 ) && ( rtarget->h() > 0 ) )
         {
-            zbuffer = new float[ rtarget->w() * rtarget->h() ];
+            rctx->zbuffer = new float[ rtarget->w() * rtarget->h() ];
         }
     }
     
@@ -123,22 +185,24 @@ void FLSWRenderer::init()
 
 bool FLSWRenderer::Render()
 {
-    if ( rtarget == NULL )
+    TORCTX( rctx );
+    
+    if ( ( rtarget == NULL ) || ( rctx == NULL ) )
         return false;
     
     TextureShader shader_texture; 
     
-    if ( texture != NULL )
+    if ( rctx->texture != NULL )
     {
-        shader_texture.Tex = *texture;
+        shader_texture.Tex = *(rctx->texture);
     }
     
-    clearBuffer();
+    rctx->clearBuffer();
 
     shader_texture.MVP = geometry::computeMVP( senceParam );
         
     // -- not work -- #pragma omp parallel for
-    for( size_t cnt=0; cnt<mesh->numFaces; cnt++ )
+    for( size_t cnt=0; cnt<rctx->mesh->numFaces; cnt++ )
     {
         vec3f triangleVertex[3];
         vec3f triangleNormal[3];
@@ -146,9 +210,12 @@ bool FLSWRenderer::Render()
 
         for( size_t cj=0; cj<3; cj++ )
         {
-            triangleVertex[cj] = mesh->vertexs[mesh->faceVertexIndex[cnt].raw[cj] -1];
-            triangleNormal[cj] = mesh->vertexsNormal[mesh->faceNormalIndex[cnt].raw[cj] -1];
-            triangleUv[cj]     = mesh->vertexTextures[mesh->faceTextureIndex[cnt].raw[cj] -1];
+            triangleVertex[cj] = \
+                rctx->mesh->vertexs[rctx->mesh->faceVertexIndex[cnt].raw[cj] -1];
+            triangleNormal[cj] = \
+                rctx->mesh->vertexsNormal[rctx->mesh->faceNormalIndex[cnt].raw[cj] -1];
+            triangleUv[cj]     = \
+                rctx->mesh->vertexTextures[rctx->mesh->faceTextureIndex[cnt].raw[cj] -1];
         }
 
         vec4f SV_Vertex[3];
@@ -171,7 +238,7 @@ bool FLSWRenderer::Render()
             SV_Vertex[cj].w = re_w;
         }
 
-        rasterizeTriangle( SV_Vertex, shader_texture );
+        rctx->rasterizeTriangle( SV_Vertex, shader_texture );
     }
     
     return true;
@@ -179,21 +246,28 @@ bool FLSWRenderer::Render()
 
 void FLSWRenderer::deinit()
 {
-    if ( zbuffer != NULL )
+    TORCTX( rctx );
+
+    if ( rctx != NULL )
     {
-        delete[] zbuffer;
-        zbuffer = NULL;
+        if ( rctx->zbuffer != NULL )
+        {
+            delete[] rctx->zbuffer;
+            rctx->zbuffer = NULL;
+        }
     }
 }
 
-void FLSWRenderer::clearBuffer()
+/////////////////////////////////////////////////////////////////////////
+
+void renderContext::clearBuffer()
 {
-    if ( rtarget != NULL )
+    if ( img != NULL )
     {
-        size_t cmax = rtarget->w() * rtarget->h();
-        uchar* buff = (uchar*)rtarget->data()[0];
+        size_t cmax = img->w() * img->h();
+        uchar* buff = (uchar*)img->data()[0];
         
-        memset( buff, 0, cmax * rtarget->d() );
+        memset( buff, 0, cmax * img->d() );
         
         for ( size_t cnt=cmax; cnt--; zbuffer[cnt] = 10000.0f )
         {
@@ -203,13 +277,13 @@ void FLSWRenderer::clearBuffer()
     }
 }
 
-void FLSWRenderer::rasterizeTriangle(vec4f SV_vertexs[3],Shader& shader)
+void renderContext::rasterizeTriangle(vec4f SV_vertexs[3],Shader& shader)
 {
-    if ( rtarget == NULL )
+    if ( img == NULL )
         return;
 
-    float fw = (float)rtarget->w();
-    float fh = (float)rtarget->h();
+    float fw = (float)img->w();
+    float fh = (float)img->h();
 
     // 1. Viewport conversion (-1,1) => (0,width/height) 
     // Simply mapped to the full screen, don¡¯t use the ViewPort matrix. 
@@ -262,11 +336,11 @@ void FLSWRenderer::rasterizeTriangle(vec4f SV_vertexs[3],Shader& shader)
                                  + weight.z * gl_coord[2].z;
 
             // Depth test 
-            if( currentDepth > zbuffer[y * rtarget->w()+x] ) 
+            if( currentDepth > zbuffer[y*img->w()+x] ) 
                 continue;
 
             // Depth sorting 
-            zbuffer[y * rtarget->w()+x] = currentDepth;
+            zbuffer[y*img->w()+x] = currentDepth;
 
             // Perspective correction interpolation 
             float weight0 = re_w[0] * weight.x;
@@ -280,7 +354,7 @@ void FLSWRenderer::rasterizeTriangle(vec4f SV_vertexs[3],Shader& shader)
     }
 }
 
-vec3f FLSWRenderer::barycentric(vec2f A,vec2f B,vec2f C,vec2f P)
+vec3f renderContext::barycentric(vec2f A,vec2f B,vec2f C,vec2f P)
 {
     vec2f ab = B - A;
     vec2f ac = C - A;
@@ -295,22 +369,22 @@ vec3f FLSWRenderer::barycentric(vec2f A,vec2f B,vec2f C,vec2f P)
     return weights;
 }
 
-inline void FLSWRenderer::setPixel(const int & x,const int & y,const Color & col)
+inline void renderContext::setPixel(const int & x,const int & y,const Color & col)
 {
-    uchar* buff = (uchar*)rtarget->data()[0];
-    uchar *dst = &(buff[y * rtarget->w() * rtarget->d() + x*rtarget->d()]);
+    uchar* buff = (uchar*)img->data()[0];
+    uchar *dst = &(buff[y * img->w() * img->d() + x*img->d()]);
     
     dst[0] = (uchar)(col.r);
     dst[1] = (uchar)(col.g);  
     dst[2] = (uchar)(col.b);
     
-    if ( rtarget->d() > 3 )
+    if ( img->d() > 3 )
     {
         dst[3] = 0xFF;
     }
 }
 
-void FLSWRenderer::drawLine(const vec2i & p0,const vec2i & p1,const Color & col)
+void renderContext::drawLine(const vec2i & p0,const vec2i & p1,const Color & col)
 {
     int x0 = p0.x; 
     int x1 = p1.x;

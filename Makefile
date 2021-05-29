@@ -18,9 +18,6 @@ TARGET = $(DIR_BIN)swrndrtest
 FLTK_ICFG = $(shell fltk-config --use-images --cxxflags)
 FLTK_LCFG = $(shell fltk-config --use-images --ldflags)
 
-#LIBWIN32S  = -lole32 -luuid -lcomctl32 -lwsock32 -lm -lgdi32 -luser32 
-#LIBWIN32S += -lkernel32 -lShlwapi -lcomdlg32 -lshcore -loleacc
-
 SRCS = $(wildcard $(DIR_SRC)*.cpp)
 OBJS = $(SRCS:$(DIR_SRC)%.cpp=$(DIR_OBJ)%.o)
 
@@ -51,18 +48,15 @@ endif
 CFLAGS += $(DEFS)
 CFLAGS += $(OPTS)
 CLFAGS += -ffast-math
-#CFLAGS += -fopenmp
 CFLAGS += -I$(DIR_SRC)
 CFLAGS += -I../fl_imgtk/lib
 CFLAGS += $(FLTK_ICFG)
 
-#LFLAGS += -static
+LFLAGS += $(LOPTS)
 LFLAGS += -L../fl_imgtk/lib
 LFLAGS += -lfl_imgtk
 LFLAGS += $(FLTK_LCFG)
-LFLAGS += $(LIBWIN32S)
-LFLAGS += $(LOPTS)
-LFLAGS += -O3 -fomit-frame-pointer
+LFLAGS += -Os -fomit-frame-pointer
 #LFLAGS += -g
 
 .PHONY: clean prepare
