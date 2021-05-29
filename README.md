@@ -29,6 +29,7 @@ FLTK software 3D renderer for Fl_RGB_Image as rendering surface.
 ## Next features
 
 * pixel shader
+* alpha transparency texture
 
 
 ## Tested on
