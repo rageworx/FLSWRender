@@ -145,7 +145,85 @@ bool FLSWRenderer::FLSWRenderer::LoadTexture( const char* txtfn )
 
 bool FLSWRenderer::LoadTexture( Fl_RGB_Image* img )
 {
-    TORCTX( rctx );
+    if ( img != NULL )
+    {
+        TORCTX( rctx );
+
+        if ( rctx != NULL )
+        {
+            if ( rctx->texture == NULL )
+            {
+                rctx->texture = new Texture();
+            }
+            else
+            {
+                delete rctx->texture;
+                
+                rctx->texture = new Texture();
+            }
+        }
+
+        if ( rctx->texture == NULL )
+            return false;
+     
+        bool alloc = false;
+        unsigned d = img->d();
+        uchar* rbuff = (uchar*)img->data()[0];
+
+        if ( ( img->w() > 0 ) && ( img->h() > 0 ) && ( d > 0 ) )
+        {
+            unsigned imgsz = img->w() * img->h();
+            switch( d )
+            {
+                case 1: /// gray.
+                {
+                    uchar* conv = new uchar[imgsz*3];
+                    if ( conv == NULL )
+                        return false;
+                    #pragma omp parallel for
+                    for( size_t cnt=0; cnt<imgsz; cnt++ )
+                    {
+                        conv[cnt*3] =\
+                        conv[cnt*3+1] =\
+                        conv[cnt*3+2] = rbuff[cnt];
+                    }
+                    d = 3;
+                    rbuff = conv;
+                    alloc = true;
+                }
+                break;
+
+                case 2: /// gray+alpha
+                {
+                    uchar* conv = new uchar[imgsz*4];
+                    if ( conv == NULL )
+                        return false;
+                    #pragma omp parallel for
+                    for( size_t cnt=0; cnt<imgsz; cnt++ )
+                    {
+                        conv[cnt*4] =\
+                        conv[cnt*4+1] =\
+                        conv[cnt*4+2] = rbuff[cnt*2];
+                        conv[cnt*4+3] = rbuff[cnt*2+1]; 
+                    }
+                    d = 4;
+                    rbuff = conv;
+                    alloc = true;
+                }
+                break;
+            } /// of switch()
+
+            rctx->texture->assign( rbuff, img->w(), img->h(), d );
+
+            if ( alloc == true )
+            {
+                delete[] rbuff;
+            }
+
+            if ( rctx->texture->size() > 0 )
+                return true;
+        }
+    }
     return false;
 }
 
