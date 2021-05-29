@@ -3,6 +3,7 @@
 #include <omp.h>
 #endif
 
+#include "geometry.hpp"
 #include "mesh.hpp"
 #include "shader.hpp"
 #include "texture.hpp"
@@ -19,6 +20,7 @@ class renderContext
         float*          zbuffer;
         Mesh*           mesh;
         Texture*        texture;
+        sceneparam      sceneParam;
 
     public:
         void  clearBuffer();
@@ -159,28 +161,28 @@ void FLSWRenderer::init()
         }
     }
     
-    senceParam.meshMove    = {0.f,0.f,0.f};
-    senceParam.meshRotate  = {0.f,0.f,0.f};
-    senceParam.meshScale   = {1.f,1.f,1.f};
-    senceParam.light       = {0.f,0.f,0.f};
+    rctx->sceneParam.meshMove    = {0.f,0.f,0.f};
+    rctx->sceneParam.meshRotate  = {0.f,0.f,0.f};
+    rctx->sceneParam.meshScale   = {1.f,1.f,1.f};
+    rctx->sceneParam.light       = {0.f,0.f,0.f};
 
     if ( rtarget != NULL )
     {
-        senceParam.aspect = (float)rtarget->w() / (float)rtarget->h();
+        rctx->sceneParam.aspect = (float)rtarget->w() / (float)rtarget->h();
     }
     else
     {
         // default is 16:9 FHD.
-        senceParam.aspect = 16.f/9.f;
+        rctx->sceneParam.aspect = 16.f/9.f;
     }
     
-    senceParam.eye         = {0.0f,0.0f,-3.0f};
-    senceParam.at          = {0.0f,0.0f,0.0f}; 
-    senceParam.up          = {0.0f,1.0f,0.0f}; 
+    rctx->sceneParam.eye         = {0.0f,0.0f,-3.0f};
+    rctx->sceneParam.at          = {0.0f,0.0f,0.0f}; 
+    rctx->sceneParam.up          = {0.0f,1.0f,0.0f}; 
 
-    senceParam.fovY        = 60;
-    senceParam.farZ        = 0.1f;
-    senceParam.nearZ       = 100.0f;
+    rctx->sceneParam.fovY        = 60;
+    rctx->sceneParam.farZ        = 0.1f;
+    rctx->sceneParam.nearZ       = 100.0f;
 }
 
 bool FLSWRenderer::Render()
@@ -199,7 +201,7 @@ bool FLSWRenderer::Render()
     
     rctx->clearBuffer();
 
-    shader_texture.MVP = geometry::computeMVP( senceParam );
+    shader_texture.MVP = geometry::computeMVP( rctx->sceneParam );
         
     // -- not work -- #pragma omp parallel for
     for( size_t cnt=0; cnt<rctx->mesh->numFaces; cnt++ )
@@ -226,7 +228,7 @@ bool FLSWRenderer::Render()
                                                    triangleNormal[cj],
                                                    triangleUv[cj],
                                                    cj,
-                                                   senceParam.light );
+                                                   rctx->sceneParam.light );
         }
 
         // Perspective division 
@@ -256,6 +258,119 @@ void FLSWRenderer::deinit()
             rctx->zbuffer = NULL;
         }
     }
+}
+
+vec3f* FLSWRenderer::shift()
+{
+    TORCTX( rctx );
+    if ( rctx != NULL )
+    {
+        return &rctx->sceneParam.meshMove;
+    }
+
+    return NULL;
+}
+
+vec3f* FLSWRenderer::rotate()
+{
+    TORCTX( rctx );
+    if ( rctx != NULL )
+    {
+        return &rctx->sceneParam.meshRotate;
+    }
+
+    return NULL;
+}
+
+vec3f* FLSWRenderer::scale()
+{
+    TORCTX( rctx );
+    if ( rctx != NULL )
+    {
+        return &rctx->sceneParam.meshScale;
+    }
+
+    return NULL;
+}
+
+vec3f* FLSWRenderer::light()
+{
+    TORCTX( rctx );
+    if ( rctx != NULL )
+    {
+        return &rctx->sceneParam.light;
+    }
+    return NULL;
+}
+
+vec3f* FLSWRenderer::eye()
+{
+    TORCTX( rctx );
+    if ( rctx != NULL )
+    {
+        return &rctx->sceneParam.eye;
+    }
+    return NULL;
+}
+
+vec3f* FLSWRenderer::lookat()
+{
+    TORCTX( rctx );
+    if ( rctx != NULL )
+    {
+        return &rctx->sceneParam.at;
+    }
+    return NULL;
+}
+
+vec3f* FLSWRenderer::upside()
+{
+    TORCTX( rctx );
+    if ( rctx != NULL )
+    {
+        return &rctx->sceneParam.up;
+    }
+    return NULL;
+}
+
+float* FLSWRenderer::aspectratio()
+{
+    TORCTX( rctx );
+    if ( rctx != NULL )
+    {
+        return &rctx->sceneParam.aspect;
+    }
+    return NULL;
+}
+
+float* FLSWRenderer::FOV()
+{
+    TORCTX( rctx );
+    if ( rctx != NULL )
+    {
+        return &rctx->sceneParam.fovY;
+    }
+    return NULL;
+}
+
+float* FLSWRenderer::FarPlane()
+{
+    TORCTX( rctx );
+    if ( rctx != NULL )
+    {
+        return &rctx->sceneParam.farZ;
+    }
+    return NULL;
+}
+
+float* FLSWRenderer::NearPlane()
+{
+    TORCTX( rctx );
+    if ( rctx != NULL )
+    {
+        return &rctx->sceneParam.nearZ;
+    }
+    return NULL;
 }
 
 /////////////////////////////////////////////////////////////////////////

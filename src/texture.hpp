@@ -2,7 +2,8 @@
 #define __TEXTURE_H__
 #pragma once
 
-#include "mathes.hpp"
+#include "FLSWRenderMath.H"
+#include "color.hpp"
 
 class Texture
 {

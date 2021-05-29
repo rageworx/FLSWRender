@@ -9,15 +9,33 @@
 
 Fl_Double_Window*   window = NULL;
 Fl_Box*             renderbox = NULL;
+Fl_Box*             helpbox = NULL;
+Fl_Box*             statebox = NULL;
 Fl_RGB_Image*       rendersurface = NULL;
 Fl_RGB_Image*       renderbg = NULL;
 Fl_RGB_Image*       rendermux = NULL;
 FLSWRenderer*       renderer = NULL;
 
-static sceneparam* sp    = NULL;
+// scene configuration pointers --
+vec3f*              objMove = NULL;
+vec3f*              objRotate = NULL;
+vec3f*              objScale = NULL;
+vec3f*              renLight = NULL;
+vec3f*              renEye = NULL;
+vec3f*              renAt = NULL;
+vec3f*              renUp = NULL;
+float*              renAspect = NULL;
+float*              renFOV = NULL;
+float*              renFar = NULL;
+float*              renNear = NULL;
+
 #ifdef TEST_UPSCALING
 static float fsaa_ratio  = 1.5f;
 #endif // TEST_UPSCALING
+
+#define SETDATA(_x_,...)    if(_x_!=NULL) *_x_ = { __VA_ARGS__ }
+
+char statestring[1024] = {0};
 
 void updateRender()
 {
@@ -51,8 +69,40 @@ void updateRender()
         }
      
         renderbox->image( rendermux );
-        renderbox->redraw();
+        renderbox->damage( 0 );
+
+        snprintf( statestring, 1024,
+                  " - move    : %.3f,%.3f,%.3f\n"
+                  " - rotate  : %.3f,%.3f,%.3f\n"
+                  " - scale   : %.3f,%.3f,%.3f\n"
+                  " - light   : %.3f,%.3f,%.3f\n"
+                  " - eye     : %.3f,%.3f,%.3f\n"
+                  " - look    : %.3f,%.3f,%.3f\n"
+                  " - apsect ratio : %.3f\n"
+                  " - FOV          : %.3f\n"
+                  " - Far plane    : %.3f\n"
+                  " - Near plane   : %.3f\n"
+                  ,
+                  objMove->x, objMove->y, objMove->z,
+                  objRotate->x, objRotate->y, objRotate->z,
+                  objScale->x, objScale->y, objScale->z,
+                  renLight->x, renLight->y, renLight->z,
+                  renEye->x, renEye->y, renEye->z,
+                  renAt->x, renAt->y, renAt->z,
+                  *renAspect,
+                  *renFOV,
+                  *renFar,
+                  *renNear
+                );
     }
+    else
+    {
+        snprintf( statestring, 1024, "state unknown" );
+    }
+
+    statebox->label( statestring );
+    statebox->damage( 0 );
+    window->redraw();
 }
 
 int fl_keyhandle( int e )
@@ -64,76 +114,76 @@ int fl_keyhandle( int e )
         switch( key )
         {
             case FL_Up:
-                if ( sp != NULL )
+                if ( objScale != NULL )
                 {
-                    sp->meshScale = sp->meshScale * 1.01f;
+                    *objScale = *objScale * 1.01f;
                     
                     updateRender();
                 }
                 break;
                 
             case FL_Left:
-                if ( sp != NULL )
+                if ( objRotate != NULL )
                 {
-                    sp->meshRotate.y += 2.f;
+                    objRotate->y += 2.f;
                     
                     updateRender();
                 }
                 break;
                 
             case FL_Right:
-                if ( sp != NULL )
+                if ( objRotate != NULL )
                 {
-                    sp->meshRotate.y -= 2.f;
+                    objRotate->y -= 2.f;
                     
                     updateRender();
                 }
                 break;
             
             case FL_Down:
-                if ( sp != NULL )
+                if ( objScale != NULL )
                 {
-                    sp->meshScale = sp->meshScale * 0.99f;
+                    *objScale = *objScale * 0.99f;
                     
                     updateRender();
                 }
                 break;
                 
             case 119: /// 'w'
-                if ( sp != NULL )
+                if ( objMove != NULL )
                 {
-                    if ( sp->meshMove.y < 1.f )
-                        sp->meshMove.y += 0.04f;
+                    if ( objMove->y < 3.f )
+                        objMove->y += 0.04f;
                         
                     updateRender();
                 }
                 break;
 
             case 97: /// 'a'
-                if ( sp != NULL )
+                if ( objMove != NULL )
                 {
-                    if ( sp->meshMove.x < 1.f )
-                        sp->meshMove.x += 0.04f;
+                    if ( objMove->x < 3.f )
+                        objMove->x += 0.04f;
                         
                     updateRender();
                 }
                 break;
 
             case 100: /// 'd'
-                if ( sp != NULL )
+                if ( objMove != NULL )
                 {
-                    if ( sp->meshMove.x > 0.f )
-                        sp->meshMove.x -= 0.04f;
+                    if ( objMove->x > -3.f )
+                        objMove->x -= 0.04f;
                         
                     updateRender();
                 }
                 break;
 
             case 115: /// 's'
-                if ( sp != NULL )
+                if ( objMove != NULL )
                 {
-                    if ( sp->meshMove.y > 0.f )
-                        sp->meshMove.y -= 0.04f;
+                    if ( objMove->y > -3.f )
+                        objMove->y -= 0.04f;
                         
                     updateRender();
                 }
@@ -155,6 +205,7 @@ int fl_keyhandle( int e )
 
 void fl_wcb( Fl_Widget* w )
 {
+    // may not called.
 }
 
 int main( int argc, char** argv )
@@ -164,6 +215,29 @@ int main( int argc, char** argv )
     
     window = new Fl_Double_Window ( refw, refh, "FLTK Software renderer demo, (C)2021 Raphael Kim" );
     renderbox = new Fl_Box( 0, 0, refw, refh );
+
+    helpbox = new Fl_Box( 10, 10, refw, 70, 
+              "object movement : W,A,S,D keys\n"
+              "object rotate/scaling : left, right, up and down arrow keys" );
+    if ( helpbox != NULL )
+    {
+        helpbox->box( FL_NO_BOX );
+        helpbox->align( FL_ALIGN_LEFT | FL_ALIGN_INSIDE );
+        helpbox->labelcolor( 0xFF993300 );
+        helpbox->labelfont( FL_HELVETICA );
+        helpbox->labelsize( 30 );
+    }
+
+    statebox = new Fl_Box( 20, 100, refw/2, refh - 100 );
+    if ( statebox != NULL )
+    {
+        statebox->box( FL_NO_BOX );
+        statebox->align( FL_ALIGN_TOP_LEFT | FL_ALIGN_INSIDE );
+        statebox->labelcolor( 0x70FF7000 );
+        statebox->labelfont( FL_COURIER );
+        statebox->labelsize( 20 );
+    }
+
     window->end();
     
     Fl::add_handler( fl_keyhandle );
@@ -188,19 +262,28 @@ int main( int argc, char** argv )
     }
     
     // config render
-    sp = renderer->parameter();
+    objMove = renderer->shift();
+    objRotate = renderer->rotate();
+    objScale = renderer->scale();
     
-    if ( sp != NULL )
-    {
-        sp->meshMove   = {0.0f,0.0f,0.0f};
-        sp->meshRotate = {0.f, 180.f ,180.f};
-        sp->meshScale  = {2.f,2.f,2.f};
+    renLight = renderer->light();
+    renEye = renderer->eye();
+    renAt = renderer->lookat();
+    renUp = renderer->upside();
+    renAspect = renderer->aspectratio();
+    renFOV = renderer->FOV();
+    renFar = renderer->FarPlane();
+    renNear = renderer->NearPlane();
 
-        sp->light      = {0.0f,0.0f,-1.0f};
-        sp->eye        = {0.0f,0.0f,-3.0f};
-        sp->at         = {0.0f,0.0f,0.0f}; 
-        sp->up         = {0.0f,1.0f,0.0f}; 
-    }
+    // setting up
+    SETDATA(objMove,    0.f,0.f,0.f);
+    SETDATA(objRotate,  0.f, 180.f ,180.f);
+    SETDATA(objScale,   2.f,2.f,2.f);
+
+    SETDATA(renLight,   0.0f,0.0f,-1.0f);
+    SETDATA(renEye,     0.0f,0.0f,-3.0f);
+    SETDATA(renAt,      0.0f,0.0f,0.0f);
+    SETDATA(renUp,      0.0f,1.0f,0.0f);
     
     updateRender();
     window->show();

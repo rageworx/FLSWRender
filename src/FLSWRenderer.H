@@ -13,8 +13,7 @@
 
 #include <FL/Fl.H>
 #include <FL/Fl_RGB_Image.H>
-
-#include "geometry.hpp"
+#include "FLSWRenderMath.H"
 
 class FLSWRenderer
 {
@@ -29,19 +28,30 @@ class FLSWRenderer
         bool LoadTexture( Fl_RGB_Image* img );
         bool Render();
 
-    public:
-        sceneparam* parameter() { return &senceParam; }
+    public: /// object modifiers
+        vec3f* shift();
+        vec3f* rotate();
+        vec3f* scale();
+        vec3f* light();
+        vec3f* eye();
+        vec3f* lookat();
+        vec3f* upside();
+        
+    public: /// global scene configs
+        float* aspectratio();
+        float* FOV();
+        float* FarPlane();
+        float* NearPlane();
 
     protected:
         void init();
         void deinit();
 
     protected:
-		Fl_RGB_Image*	rtarget;
-        sceneparam      senceParam;
+        Fl_RGB_Image*   rtarget;
         
     private:
-		void*			ctx;
+        void*           ctx;
         
     private:
 };

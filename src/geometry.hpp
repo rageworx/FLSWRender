@@ -2,14 +2,14 @@
 #define __GEOMETRY_H__
 #pragma once
 
-#include "mathes.hpp"
+#include "FLSWRenderMath.H"
 
 typedef struct _sceneparam
 {
     // Model attributes : MESH
-    vec3f meshMove;  /// The model is shifted in world space
-    vec3f meshRotate;    /// Model rotation value
-    vec3f meshScale;     /// model scale value
+    vec3f meshMove;     /// The model is shifted in world space
+    vec3f meshRotate;   /// Model rotation value
+    vec3f meshScale;    /// model scale value
 
     // Light attributes
     vec3f light;        /// position of light
@@ -22,8 +22,8 @@ typedef struct _sceneparam
     // scene config-
     float aspect;       /// Aspect ratio
     float fovY;         /// Field of view
-    float farZ;         /// Near plane
-    float nearZ;        /// Far plane 
+    float farZ;         /// Far plane
+    float nearZ;        /// Near plane 
 }sceneparam;
 
 namespace geometry

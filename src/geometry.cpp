@@ -1,5 +1,7 @@
 #include "geometry.hpp"
 
+#define R2PI    ( M_PI / 180.0 )
+
 mat geometry::computeModelMatrix(const sceneparam& m)
 {
     mat ScaleMatrix = mat::identity(4);
@@ -14,14 +16,14 @@ mat geometry::computeModelMatrix(const sceneparam& m)
 
     mat RotateMatrix = mat::identity(4);
     
-    float cosX = std::cos(m.meshRotate.x * RtoPi);
-    float sinX = std::sin(m.meshRotate.x * RtoPi);
+    float cosX = std::cos(m.meshRotate.x * R2PI);
+    float sinX = std::sin(m.meshRotate.x * R2PI);
 
-    float cosY = std::cos(m.meshRotate.y *RtoPi);
-    float sinY = std::sin(m.meshRotate.y * RtoPi);
+    float cosY = std::cos(m.meshRotate.y * R2PI);
+    float sinY = std::sin(m.meshRotate.y * R2PI);
 
-    float cosZ = std::cos(m.meshRotate.z * RtoPi);
-    float sinZ = std::sin(m.meshRotate.z * RtoPi);
+    float cosZ = std::cos(m.meshRotate.z * R2PI);
+    float sinZ = std::sin(m.meshRotate.z * R2PI);
 
     RotateMatrix[0][0] = cosY*cosZ;
     RotateMatrix[0][1] = -cosX*sinZ + sinX*sinY*cosZ;
@@ -68,7 +70,7 @@ mat geometry::computeProjectMatrix(const sceneparam& m)
     mat projMat = mat::identity(4);
 
     // cot(fovy* pi / 360)
-    float cotFovyDiv2 = 1.f / tan(m.fovY*RtoPi / 2.f);
+    float cotFovyDiv2 = 1.f / tan(m.fovY*R2PI / 2.f);
 
     projMat[0][0] = cotFovyDiv2 / m.aspect;
     projMat[1][1] = cotFovyDiv2;

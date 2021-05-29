@@ -10,13 +10,7 @@
     #define M_PI    acos(-1) 
 #endif
 
-#define RtoPi       ( M_PI / 180.0 )
-
 #pragma region Vector
-
-// Color structure 
-struct Color{ int r,g,b; Color(int rr,int gg,int bb):r(rr),b(bb),g(gg){} };
-
 namespace ____MATH__Vector
 {
     template <class T> struct Vector2

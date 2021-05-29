@@ -1,4 +1,4 @@
-# Makefile for POSIX, for Dazed/SoftwareRenderer
+# Makefile for POSIX, for FLTK software rednerer test
 # -----------------------------------------------------------------------------
 # (C)2021 Raphael Kim
 
@@ -8,12 +8,17 @@ ARCH_R = $(shell uname -r | cut -d . -f1)
 
 GCC = gcc
 GXX = g++
+AR  = ar
+RL  = ranlib
 
 DIR_SRC = src/
 DIR_OBJ = obj/
+DIR_LIB = lib/
 DIR_BIN = bin/
 
-TARGET = $(DIR_BIN)swrndrtest
+NAME_B = flswrender
+TARGET = $(DIR_LIB)lib$(NAME_B).a
+TESTBIN = $(DIR_BIN)test
 
 FLTK_ICFG = $(shell fltk-config --use-images --cxxflags)
 FLTK_LCFG = $(shell fltk-config --use-images --ldflags)
@@ -59,23 +64,34 @@ LFLAGS += $(FLTK_LCFG)
 LFLAGS += -Os -fomit-frame-pointer
 #LFLAGS += -g
 
-.PHONY: clean prepare
+.PHONY: clean prepare test cleantest
 
 all: prepare $(TARGET)
 
 prepare:
 	@mkdir -p $(DIR_OBJ)
+	@mkdir -p $(DIR_LIB)
 	@mkdir -p $(DIR_BIN)
 
 clean:
 	@rm -rf $(OBJS)
 	@rm -rf $(TARGET)
 
+cleantest:
+	@rm -rf $(TESTBIN)
+
 $(OBJS): $(DIR_OBJ)%.o: $(DIR_SRC)%.cpp
 	@echo "Building $@ ... "
 	@$(GXX) $(CFLAGS) -c $< -o $@
     
- $(TARGET): $(OBJS)
+$(TARGET): $(OBJS)
 	@echo "Generating $@ ..."
-	@$(GXX) $^ $(CFLAGS) $(LFLAGS) -o $@
-	@echo "done."
+	@$(AR) -cr $@ $^
+	@$(RL) $@
+	@cp -f src/FLSWRenderer.H lib
+	@cp -f src/FLSWRenderMath.H lib
+	@echo "done"
+				 
+test: $(TARGET)
+	@echo "Generating test ..."
+	@$(GXX) test/main.cpp $(CFLAGS) $(LFLAGS) -Llib -l$(NAME_B) -o $(TESTBIN)

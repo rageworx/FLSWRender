@@ -2,7 +2,7 @@
 #define __MESH_H__
 #pragma once
 
-#include "mathes.hpp"
+#include "FLSWRenderMath.H"
 
 struct Mesh
 {
@@ -19,7 +19,7 @@ struct Mesh
 
 namespace ObjParser
 {
-    bool ParseMesh(const char*,Mesh*);
+    bool ParseMesh(const char*, Mesh*);
     bool ParseMesh(const char*, size_t, Mesh*);
 };
 
