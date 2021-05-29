@@ -1,5 +1,7 @@
-#include "FLSWRenderer.hpp"
+#include "FLSWRenderer.H"
+#ifndef __APPLE__
 #include <omp.h>
+#endif
 
 FLSWRenderer::FLSWRenderer( Fl_RGB_Image* target )
  : rtarget( target ),
@@ -193,7 +195,7 @@ void FLSWRenderer::clearBuffer()
         
         memset( buff, 0, cmax * rtarget->d() );
         
-        for ( size_t cnt=cmax; cnt--; zbuffer[cnt] = 10000.0f );
+        for ( size_t cnt=cmax; cnt--; zbuffer[cnt] = 10000.0f )
         {
             // nothing to do.
             buff[0] = 0;

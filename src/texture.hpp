@@ -26,11 +26,7 @@ class Texture
         int     height;
         int     channels;
 
-        //Why should I use vector<> instead of unsigner char* pixels directly ?
-        //  Because when I use the latter, 
-        //  there will be an inexplicable access out-of-bounds phenomenon, 
-        //  and the linear linked list structure solves the memory out-of-bounds 
-        //  caused by excessive data. 
+    protected:
         std::vector<unsigned char> pixels;
 };
 

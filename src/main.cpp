@@ -1,12 +1,11 @@
-﻿#include "FLSWRenderer.hpp"
-
-#include <FL/Fl.H>
+﻿#include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_RGB_Image.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Button.H>
 #include <fl_imgtk.h>
-#include "FLSWREnderer.hpp"
+
+#include "FLSWRenderer.H"
 
 Fl_Double_Window*   window = NULL;
 Fl_Box*             renderbox = NULL;
@@ -103,7 +102,7 @@ int fl_keyhandle( int e )
             case 119: /// 'w'
                 if ( sp != NULL )
                 {
-                    if ( sp->meshMove.y < 1.f );
+                    if ( sp->meshMove.y < 1.f )
                         sp->meshMove.y += 0.04f;
                         
                     updateRender();
@@ -113,7 +112,7 @@ int fl_keyhandle( int e )
             case 97: /// 'a'
                 if ( sp != NULL )
                 {
-                    if ( sp->meshMove.x < 1.f );
+                    if ( sp->meshMove.x < 1.f )
                         sp->meshMove.x += 0.04f;
                         
                     updateRender();
@@ -123,7 +122,7 @@ int fl_keyhandle( int e )
             case 100: /// 'd'
                 if ( sp != NULL )
                 {
-                    if ( sp->meshMove.x > 0.f );
+                    if ( sp->meshMove.x > 0.f )
                         sp->meshMove.x -= 0.04f;
                         
                     updateRender();
@@ -133,7 +132,7 @@ int fl_keyhandle( int e )
             case 115: /// 's'
                 if ( sp != NULL )
                 {
-                    if ( sp->meshMove.y > 0.f );
+                    if ( sp->meshMove.y > 0.f )
                         sp->meshMove.y -= 0.04f;
                         
                     updateRender();
