@@ -152,9 +152,9 @@ int fl_keyhandle( int e )
             case 119: /// 'w'
                 if ( objMove != NULL )
                 {
-                    if ( objMove->y < 3.f )
-                        objMove->y += 0.04f;
-                        
+                    if ( objMove->y > -3.f )
+                        objMove->y -= 0.04f;
+                       
                     updateRender();
                 }
                 break;
@@ -182,9 +182,9 @@ int fl_keyhandle( int e )
             case 115: /// 's'
                 if ( objMove != NULL )
                 {
-                    if ( objMove->y > -3.f )
-                        objMove->y -= 0.04f;
-                        
+                    if ( objMove->y < 3.f )
+                        objMove->y += 0.04f;
+                       
                     updateRender();
                 }
                 break;
