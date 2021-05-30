@@ -1,7 +1,7 @@
 # FLSWRender
 FLTK software 3D renderer for Fl_RGB_Image as rendering surface.
 
-
+<img src="https://raw.githubusercontent.com/rageworx/FLSWRender/main/images/MacOS11_M1.png">
 
 ## Supports
 
