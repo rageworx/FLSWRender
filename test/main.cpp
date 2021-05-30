@@ -257,8 +257,10 @@ int main( int argc, char** argv )
     
     if ( renderer != NULL )
     {
-        renderer->LoadObjects( "model/diablo3_pose.obj" );
-        renderer->LoadTexture( "model/diablo3_pose.png" );
+        //renderer->LoadObjects( "model/diablo3_pose.obj" );
+        renderer->LoadObjects( "model/miku.obj" );
+        //renderer->LoadTexture( "model/diablo3_pose.png" );
+        renderer->LoadTexture( "model/miku.png" );
     }
     
     // config render
@@ -276,9 +278,11 @@ int main( int argc, char** argv )
     renNear = renderer->NearPlane();
 
     // setting up
-    SETDATA(objMove,    0.f,0.f,0.f);
+    //SETDATA(objMove,    0.f,0.f,0.f);
+    SETDATA(objMove,    0.f,0.8f,0.f);
     SETDATA(objRotate,  0.f, 180.f ,180.f);
-    SETDATA(objScale,   2.f,2.f,2.f);
+    //SETDATA(objScale,   2.f,2.f,2.f);
+    SETDATA(objScale,   0.5f,0.5f,0.5f);
 
     SETDATA(renLight,   0.0f,0.0f,-1.0f);
     SETDATA(renEye,     0.0f,0.0f,-3.0f);
