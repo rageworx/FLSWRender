@@ -64,14 +64,15 @@ CLFAGS += -ffast-math
 CFLAGS += -I$(DIR_SRC)
 CFLAGS += -I../fl_imgtk/lib
 CFLAGS += $(FLTK_ICFG)
-CFLAGS += -Os
-#CFLAGS += -g
+#CFLAGS += -Os
+CFLAGS += -g
 
 LFLAGS += $(LOPTS)
 LFLAGS += -L../fl_imgtk/lib
 LFLAGS += -l$(FLIMGTKL)
 LFLAGS += $(FLTK_LCFG)
-LFLAGS += -fomit-frame-pointer
+#LFLAGS += -fomit-frame-pointer
+LFLAGS += -g
 
 .PHONY: clean prepare test cleantest
 

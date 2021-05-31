@@ -597,7 +597,7 @@ inline void renderContext::setPixel(const int & x,const int & y,const Color & co
     
     if ( img->d() > 3 )
     {
-        dst[3] = 0xFF;
+        dst[3] = (uchar)(col.a);
     }
 }
 

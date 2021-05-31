@@ -264,7 +264,7 @@ int main( int argc, char** argv )
     
     if ( renderer != NULL )
     {
-        renderer->color( 0xFF33337F );
+        renderer->color( 0xFF3333FF );
         renderer->LoadObjects( "model/diablo3_pose.obj" );
         renderer->LoadTexture( "model/diablo3_pose.png" );
     }
