@@ -12,6 +12,7 @@ AR  = ar
 RL  = ranlib
 
 DIR_SRC = src/
+DIR_TST = test/
 DIR_OBJ = obj/
 DIR_LIB = lib/
 DIR_BIN = bin/
@@ -23,8 +24,12 @@ TESTBIN = $(DIR_BIN)test
 FLTK_ICFG = $(shell fltk-config --use-images --cxxflags)
 FLTK_LCFG = $(shell fltk-config --use-images --ldflags)
 
-SRCS = $(wildcard $(DIR_SRC)*.cpp)
-OBJS = $(SRCS:$(DIR_SRC)%.cpp=$(DIR_OBJ)%.o)
+LIBSRCS = $(wildcard $(DIR_SRC)*.cpp)
+LIBOBJS = $(LIBSRCS:$(DIR_SRC)%.cpp=$(DIR_OBJ)%.o)
+
+TESTSRCS += $(DIR_TST)perfmon.cpp
+TESTSRCS += $(DIR_TST)main.cpp
+TESTOBJS  = $(TESTSRCS:$(DIR_TST)%.cpp=$(DIR_TST)%.o)
 
 DEFS += -DCORRECTING_SHADOW
 OPTS  =
@@ -41,11 +46,13 @@ ifeq ($(ARCH_S),Darwin)
 	OPTS  += -std=c++11
 else ifeq ($(ARCH_S),Linux)
 	OPTS  += -std=c++11
+    OPTS  += -fopenmp
 	LOPTS += -s
 else
 	ARCH_SS = $(shell echo $(ARCH_S) | cut -d _ -f1)
 	ifeq ($(ARCH_SS),MINGW64)
-		OPTS  += -mwindows 
+		OPTS  += -mwindows
+        OPTS  += -fopenmp
 		LOPTS += -s -static
 	endif
 endif
@@ -56,17 +63,19 @@ CLFAGS += -ffast-math
 CFLAGS += -I$(DIR_SRC)
 CFLAGS += -I../fl_imgtk/lib
 CFLAGS += $(FLTK_ICFG)
+CFLAGS += -Os
 
 LFLAGS += $(LOPTS)
 LFLAGS += -L../fl_imgtk/lib
 LFLAGS += -lfl_imgtk
 LFLAGS += $(FLTK_LCFG)
-LFLAGS += -Os -fomit-frame-pointer
+LFLAGS += -fomit-frame-pointer
 #LFLAGS += -g
 
 .PHONY: clean prepare test cleantest
 
 all: prepare $(TARGET)
+cleanall: clean cleantest
 
 prepare:
 	@mkdir -p $(DIR_OBJ)
@@ -74,24 +83,29 @@ prepare:
 	@mkdir -p $(DIR_BIN)
 
 clean:
-	@rm -rf $(OBJS)
+	@rm -rf $(LIBOBJS)
 	@rm -rf $(TARGET)
 
 cleantest:
+	@rm -rf $(TESTOBJS)
 	@rm -rf $(TESTBIN)
 
-$(OBJS): $(DIR_OBJ)%.o: $(DIR_SRC)%.cpp
+$(LIBOBJS): $(DIR_OBJ)%.o: $(DIR_SRC)%.cpp
 	@echo "Building $@ ... "
 	@$(GXX) $(CFLAGS) -c $< -o $@
     
-$(TARGET): $(OBJS)
+$(TARGET): $(LIBOBJS)
 	@echo "Generating $@ ..."
 	@$(AR) -cr $@ $^
 	@$(RL) $@
 	@cp -f src/FLSWRenderer.H lib
 	@cp -f src/FLSWRenderMath.H lib
 	@echo "done"
-				 
-test: $(TARGET)
+
+$(TESTOBJS): $(DIR_TST)%.o: $(DIR_TST)%.cpp
+	@echo "Building $@ ... "
+	@$(GXX) $(CFLAGS) -c $< -o $@
+
+test: $(TESTOBJS) $(TARGET) 
 	@echo "Generating test ..."
-	@$(GXX) test/main.cpp $(CFLAGS) $(LFLAGS) -Llib -l$(NAME_B) -o $(TESTBIN)
+	@$(GXX) $(TESTOBJS) $(CFLAGS) -I$(DIR_TST) $(LFLAGS) -Llib -l$(NAME_B) -o $(TESTBIN)

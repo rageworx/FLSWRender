@@ -6,6 +6,7 @@
 #include <fl_imgtk.h>
 
 #include "FLSWRenderer.H"
+#include "perfmon.h"
 
 Fl_Double_Window*   window = NULL;
 Fl_Box*             renderbox = NULL;
@@ -35,13 +36,17 @@ static float fsaa_ratio  = 1.5f;
 
 #define SETDATA(_x_,...)    if(_x_!=NULL) *_x_ = { __VA_ARGS__ }
 
-char statestring[1024] = {0};
+static Perfmon  perf;
+static char statestring[1024] = {0};
 
 void updateRender()
 {
     if ( renderer != NULL )
     {
+        perf.SetMonStart();
         renderer->Render();
+        perf.SetMonStop();
+        unsigned long perfms = perf.GetPerfMS();
         
         if ( rendermux == NULL )
         {
@@ -82,6 +87,7 @@ void updateRender()
                   " - FOV          : %.3f\n"
                   " - Far plane    : %.3f\n"
                   " - Near plane   : %.3f\n"
+                  " - Draw Perf.   : %lu ms.\n"
                   ,
                   objMove->x, objMove->y, objMove->z,
                   objRotate->x, objRotate->y, objRotate->z,
@@ -92,7 +98,8 @@ void updateRender()
                   *renAspect,
                   *renFOV,
                   *renFar,
-                  *renNear
+                  *renNear,
+                  perfms
                 );
     }
     else

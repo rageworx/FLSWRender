@@ -281,7 +281,8 @@ bool FLSWRenderer::Render()
 
     shader_texture.MVP = geometry::computeMVP( rctx->sceneParam );
         
-    // -- not work -- #pragma omp parallel for
+    // -- currently OpenMP not works --
+    // #pragma omp parallel for shared( shader_texture )
     for( size_t cnt=0; cnt<rctx->mesh->numFaces; cnt++ )
     {
         vec3f triangleVertex[3];
@@ -462,10 +463,10 @@ void renderContext::clearBuffer()
         
         memset( buff, 0, cmax * img->d() );
         
-        for ( size_t cnt=cmax; cnt--; zbuffer[cnt] = 10000.0f )
+        #pragma omp parallel for
+        for ( size_t cnt=0; cnt<=cmax; cnt++ )
         {
-            // nothing to do.
-            buff[0] = 0;
+            zbuffer[cnt] = 10000.0f;
         }
     }
 }
@@ -507,9 +508,9 @@ void renderContext::rasterizeTriangle(vec4f SV_vertexs[3],Shader& shader)
     int y = 0;
     
     // Traverse the pixels in the bounding box 
-    for(x=xMin; x<int(xMax+1); x++)
+    for( x=(int)xMin; x<int(xMax+1); x++)
     {
-        for(y=yMin; y<int(yMax+1); y++)
+        for( y=(int)yMin; y<int(yMax+1); y++)
         {
             // Calculate the center of gravity triangle 
             vec2f current_pixel = vec2f(x,y);
