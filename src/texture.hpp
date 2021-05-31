@@ -14,6 +14,8 @@ class Texture
 
     public:
         Color    GetPixel(float u,float v);
+        void     SetColor( Color c );
+        Color    GetColor();
         
     public:
         void     assign( unsigned char* p, unsigned w, unsigned h, unsigned d );
@@ -26,6 +28,7 @@ class Texture
         int     width;
         int     height;
         int     channels;
+        Color   defaultcolor;
 
     protected:
         std::vector<unsigned char> pixels;

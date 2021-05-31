@@ -270,13 +270,26 @@ bool FLSWRenderer::Render()
     if ( ( rtarget == NULL ) || ( rctx == NULL ) )
         return false;
     
-    TextureShader shader_texture; 
+    if ( rctx->texture == NULL ) /// create empty one.
+    {
+        rctx->texture = new Texture();
+    }
+
+    // set default color ...
+    Color defcol = Color( (int)(( defaultcolor & 0xFF000000 ) >> 24 ),
+                          (int)(( defaultcolor & 0x00FF0000 ) >> 16 ),
+                          (int)(( defaultcolor & 0x0000FF00 ) >> 8  ),
+                          (int)(  defaultcolor & 0x000000FF ) );
+    rctx->texture->SetColor( defcol );
+    Color testcol = rctx->texture->GetColor();
     
+    TextureShader shader_texture; 
+        
     if ( rctx->texture != NULL )
     {
         shader_texture.Tex = *(rctx->texture);
     }
-    
+        
     rctx->clearBuffer();
 
     shader_texture.MVP = geometry::computeMVP( rctx->sceneParam );
@@ -323,6 +336,16 @@ bool FLSWRenderer::Render()
     }
     
     return true;
+}
+
+void FLSWRenderer::color( unsigned color )
+{
+    defaultcolor = color;
+}
+
+unsigned FLSWRenderer::color()
+{
+    return defaultcolor;
 }
 
 void FLSWRenderer::deinit()
@@ -625,3 +648,4 @@ void renderContext::drawLine(const vec2i & p0,const vec2i & p1,const Color & col
         }
     }
 }
+

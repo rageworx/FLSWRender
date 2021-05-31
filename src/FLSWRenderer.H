@@ -27,6 +27,10 @@ class FLSWRenderer
         bool LoadTexture( const char* txtfn = NULL );
         bool LoadTexture( Fl_RGB_Image* img );
         bool Render();
+        
+    public:
+        void color( unsigned color );
+        unsigned color();
 
     public: /// object modifiers
         vec3f* shift();
@@ -49,6 +53,7 @@ class FLSWRenderer
 
     protected:
         Fl_RGB_Image*   rtarget;
+        unsigned        defaultcolor;
         
     private:
         void*           ctx;

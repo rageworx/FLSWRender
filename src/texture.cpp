@@ -68,9 +68,10 @@ Color Texture::GetPixel(float u,float v)
 
     // returns white pixel if coordination is
     // out of boundary pixel or no-texture.
-    int r = 255;
-    int g = 255;
-    int b = 255;
+    int r = defaultcolor.r;
+    int g = defaultcolor.g;
+    int b = defaultcolor.b;
+    int a = defaultcolor.a;
     
     // prevent out of range -
     if ( q < pixels.size() )
@@ -78,9 +79,22 @@ Color Texture::GetPixel(float u,float v)
         r = pixels[q];
         g = pixels[q+1];
         b = pixels[q+2];
+        
+        if ( channels > 3 )
+            a = pixels[q+3];
 
         // where alpha belongs ... ?
     }
     
-    return Color(r,g,b);
+    return Color(r,g,b,a);
+}
+
+void Texture::SetColor( Color c )
+{
+    defaultcolor = c;
+}
+
+Color Texture::GetColor()
+{
+    return defaultcolor;
 }

@@ -258,12 +258,13 @@ int main( int argc, char** argv )
 #else
     rendersurface = fl_imgtk::makeanempty( refw, refh, 4, 0x000000 );
 #endif
-    renderbg = fl_imgtk::makegradation_h( refw, refh, 0xCFCFCFFF, 0x505050FF, true );
+    renderbg = fl_imgtk::makegradation_h( refw, refh, 0x505050FF, 0x101010FF, true );
     
     renderer = new FLSWRenderer( rendersurface );
     
     if ( renderer != NULL )
     {
+        renderer->color( 0xFF33337F );
         renderer->LoadObjects( "model/diablo3_pose.obj" );
         renderer->LoadTexture( "model/diablo3_pose.png" );
     }

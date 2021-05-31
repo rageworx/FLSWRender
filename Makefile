@@ -23,6 +23,7 @@ TESTBIN = $(DIR_BIN)test
 
 FLTK_ICFG = $(shell fltk-config --use-images --cxxflags)
 FLTK_LCFG = $(shell fltk-config --use-images --ldflags)
+FLIMGTKL  = fl_imgtk
 
 LIBSRCS = $(wildcard $(DIR_SRC)*.cpp)
 LIBOBJS = $(LIBSRCS:$(DIR_SRC)%.cpp=$(DIR_OBJ)%.o)
@@ -64,13 +65,13 @@ CFLAGS += -I$(DIR_SRC)
 CFLAGS += -I../fl_imgtk/lib
 CFLAGS += $(FLTK_ICFG)
 CFLAGS += -Os
+#CFLAGS += -g
 
 LFLAGS += $(LOPTS)
 LFLAGS += -L../fl_imgtk/lib
-LFLAGS += -lfl_imgtk
+LFLAGS += -l$(FLIMGTKL)
 LFLAGS += $(FLTK_LCFG)
 LFLAGS += -fomit-frame-pointer
-#LFLAGS += -g
 
 .PHONY: clean prepare test cleantest
 

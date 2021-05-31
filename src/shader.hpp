@@ -54,18 +54,18 @@ struct TextureShader : public Shader
         return (MVP * mat(vertex)).ToVec4f();
     }
 
-    Color fragment(vec3f& lerpCorrect) override
+	Color fragment(vec3f& lerpCorrect) override
     {
-        float normalizer = 1.f / ( lerpCorrect.x + lerpCorrect.y + lerpCorrect.z );
+		float normalizer = 1.f / ( lerpCorrect.x + lerpCorrect.y + lerpCorrect.z );
         
-        correct_vary_Intensity = (  ( vary_Intensity[0] * lerpCorrect.x )
-                                  + ( vary_Intensity[1] * lerpCorrect.y )
-                                  + ( vary_Intensity[2] * lerpCorrect.z ) )
+		correct_vary_Intensity = (  ( vary_Intensity[0] * lerpCorrect.x )
+							      + ( vary_Intensity[1] * lerpCorrect.y )
+						          + ( vary_Intensity[2] * lerpCorrect.z ) )
                                  * normalizer;
                                  
-        correct_vary_UV =   ( vary_UVs[0] * lerpCorrect.x * normalizer )
-                          + ( vary_UVs[1] * lerpCorrect.y * normalizer )
-                          + ( vary_UVs[2] * lerpCorrect.z * normalizer );
+		correct_vary_UV =   ( vary_UVs[0] * lerpCorrect.x * normalizer )
+						  + ( vary_UVs[1] * lerpCorrect.y * normalizer )
+						  + ( vary_UVs[2] * lerpCorrect.z * normalizer );
 
         Color rgb  = Tex.GetPixel( correct_vary_UV.x, correct_vary_UV.y );
 
@@ -73,9 +73,9 @@ struct TextureShader : public Shader
         rgb.r = (float)rgb.r * ( 1.f - correct_vary_Intensity );
         rgb.g = (float)rgb.g * ( 1.f - correct_vary_Intensity );
         rgb.b = (float)rgb.b * ( 1.f - correct_vary_Intensity );
-        
-        return rgb;
-    }
+                
+		return rgb;
+	}
 };
 
 #endif /// of __SHADER_H__
