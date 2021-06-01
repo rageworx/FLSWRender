@@ -126,6 +126,9 @@ void updateRender()
     statebox->label( statestring );
     statebox->damage( 0 );
     window->redraw();
+#ifndef __APPLE__
+    Fl::flush();
+#endif
 }
 
 int fl_keyhandle( int e )
@@ -139,7 +142,8 @@ int fl_keyhandle( int e )
             case FL_Up:
                 if ( objScale != NULL )
                 {
-                    *objScale = *objScale * 1.01f;
+                    if ( objScale->x < 3.6f )
+                        *objScale = *objScale * 1.01f;
                     
                     updateRender();
                 }
@@ -166,7 +170,8 @@ int fl_keyhandle( int e )
             case FL_Down:
                 if ( objScale != NULL )
                 {
-                    *objScale = *objScale * 0.99f;
+                    if ( objScale->x > 0.f )
+                        *objScale = *objScale * 0.99f;
                     
                     updateRender();
                 }
