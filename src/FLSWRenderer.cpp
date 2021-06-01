@@ -3,6 +3,10 @@
 #include <omp.h>
 #endif
 
+#ifdef USE_FL_IMGTK
+#include <fl_imgtk.h>
+#endif
+
 #include "geometry.hpp"
 #include "mesh.hpp"
 #include "shader.hpp"
@@ -12,7 +16,8 @@ class renderContext
 {
     public:
         renderContext()
-            : img(NULL), zbuffer(NULL), mesh(NULL), texture(NULL) {};
+            : img(NULL), zbuffer(NULL), mesh(NULL), texture(NULL), 
+              drawline(false), drawtexture(true) {};
         ~renderContext() {};
 
     public:
@@ -21,9 +26,12 @@ class renderContext
         Mesh*           mesh;
         Texture*        texture;
         sceneparam      sceneParam;
+        bool            drawline;
+        bool            drawtexture;
+        Color           linecolor;
 
     public:
-        void  clearBuffer();
+        void  clearBuffer( bool earsebuff );
         void  rasterizeTriangle(vec4f SV_Vertexs[3],Shader& shader);
         vec3f barycentric(vec2f A,vec2f B,vec2f C,vec2f P);
         inline \
@@ -35,7 +43,9 @@ class renderContext
 
 FLSWRenderer::FLSWRenderer( Fl_RGB_Image* target )
  : rtarget( target ),
-   ctx( NULL )
+   ctx( NULL ),
+   drawline( false ),
+   drawtexture( true )
 {
     if ( rtarget != NULL )
     {
@@ -263,7 +273,7 @@ void FLSWRenderer::init()
     rctx->sceneParam.nearZ       = 100.0f;
 }
 
-bool FLSWRenderer::Render()
+bool FLSWRenderer::Render( bool earsebuff )
 {
     TORCTX( rctx );
     
@@ -275,13 +285,18 @@ bool FLSWRenderer::Render()
         rctx->texture = new Texture();
     }
 
-    // set default color ...
+    // set default colors ...
     Color defcol = Color( (int)(( defaultcolor & 0xFF000000 ) >> 24 ),
                           (int)(( defaultcolor & 0x00FF0000 ) >> 16 ),
                           (int)(( defaultcolor & 0x0000FF00 ) >> 8  ),
                           (int)(  defaultcolor & 0x000000FF ) );
     rctx->texture->SetColor( defcol );
     Color testcol = rctx->texture->GetColor();
+    defcol = Color( (int)(( dlinecolor & 0xFF000000 ) >> 24 ),
+                    (int)(( dlinecolor & 0x00FF0000 ) >> 16 ),
+                    (int)(( dlinecolor & 0x0000FF00 ) >> 8  ),
+                    (int)(  dlinecolor & 0x000000FF ) );    
+    rctx->linecolor = defcol;
     
     TextureShader shader_texture; 
         
@@ -289,14 +304,18 @@ bool FLSWRenderer::Render()
     {
         shader_texture.Tex = *(rctx->texture);
     }
-        
-    rctx->clearBuffer();
+
+    rctx->clearBuffer( earsebuff );
+    rctx->drawline = drawline;
+    rctx->drawtexture = drawtexture;
 
     shader_texture.MVP = geometry::computeMVP( rctx->sceneParam );
-        
+    size_t numFaces = rctx->mesh->faceVertexIndex.size();
+    
     // -- currently OpenMP not works --
     // #pragma omp parallel for shared( shader_texture )
-    for( size_t cnt=0; cnt<rctx->mesh->numFaces; cnt++ )
+    //for( size_t cnt=0; cnt<rctx->mesh->numFaces; cnt++ )
+    for( size_t cnt=0; cnt<numFaces; cnt++ )
     {
         vec3f triangleVertex[3];
         vec3f triangleNormal[3];
@@ -332,9 +351,9 @@ bool FLSWRenderer::Render()
             SV_Vertex[cj].w = re_w;
         }
 
-        rctx->rasterizeTriangle( SV_Vertex, shader_texture );
+        rctx->rasterizeTriangle( SV_Vertex, shader_texture );        
     }
-    
+        
     return true;
 }
 
@@ -346,6 +365,81 @@ void FLSWRenderer::color( unsigned color )
 unsigned FLSWRenderer::color()
 {
     return defaultcolor;
+}
+
+void FLSWRenderer::linecolor( unsigned color )
+{
+    dlinecolor = color;
+}
+
+unsigned FLSWRenderer::linecolor()
+{
+    return dlinecolor;
+}
+
+void FLSWRenderer::line( bool onoff )
+{
+    drawline = onoff;
+}
+
+bool FLSWRenderer::line()
+{
+    return drawline;
+}
+
+void FLSWRenderer::texture( bool onoff )
+{
+    drawtexture = onoff;
+}
+
+bool FLSWRenderer::texture()
+{
+    return drawtexture;
+}
+
+size_t FLSWRenderer::vertexs()
+{
+    TORCTX( rctx );
+
+    if ( rctx != NULL )
+    {
+        if ( rctx->mesh != NULL )
+        {
+            return rctx->mesh->vertexs.size();
+        }
+    }
+    
+    return 0;
+}
+
+size_t FLSWRenderer::faces()
+{
+    TORCTX( rctx );
+
+    if ( rctx != NULL )
+    {
+        if ( rctx->mesh != NULL )
+        {
+            return rctx->mesh->faceVertexIndex.size();
+        }
+    }
+    
+    return 0;
+}
+
+size_t FLSWRenderer::texturecoords()
+{
+    TORCTX( rctx );
+
+    if ( rctx != NULL )
+    {
+        if ( rctx->mesh != NULL )
+        {
+            return rctx->mesh->vertexTextures.size();
+        }
+    }
+    
+    return 0;
 }
 
 void FLSWRenderer::deinit()
@@ -477,14 +571,15 @@ float* FLSWRenderer::NearPlane()
 
 /////////////////////////////////////////////////////////////////////////
 
-void renderContext::clearBuffer()
+void renderContext::clearBuffer( bool earsebuff )
 {
     if ( img != NULL )
     {
         size_t cmax = img->w() * img->h();
         uchar* buff = (uchar*)img->data()[0];
         
-        memset( buff, 0, cmax * img->d() );
+        if ( earsebuff == true )
+            memset( buff, 0, cmax * img->d() );
         
         #pragma omp parallel for
         for ( size_t cnt=0; cnt<=cmax; cnt++ )
@@ -516,59 +611,86 @@ void renderContext::rasterizeTriangle(vec4f SV_vertexs[3],Shader& shader)
         gl_coord[cnt].z = (SV_vertexs[cnt].z + 1.0f) / 2.f; 
     }
 
-    // 2. Calculate the bounding box 
-	float xMax = (std::max)({gl_coord[0].x, gl_coord[1].x, gl_coord[2].x});
-	float xMin = (std::min)({gl_coord[0].x, gl_coord[1].x, gl_coord[2].x});
-    float yMax = (std::max)({gl_coord[0].y, gl_coord[1].y, gl_coord[2].y});
-    float yMin = (std::min)({gl_coord[0].y, gl_coord[1].y, gl_coord[2].y});
-
-    xMax = (std::min)(xMax, fw -1.f );
-    xMin = (std::max)(xMin, 0.f);
-    yMax = (std::min)(yMax, fh -1.f );
-    yMin = (std::max)(yMin, 0.f);
-
-    int x = 0;
-    int y = 0;
-    
-    // Traverse the pixels in the bounding box 
-    for( x=(int)xMin; x<int(xMax+1); x++)
+    if ( drawtexture == true )
     {
-        for( y=(int)yMin; y<int(yMax+1); y++)
+        // 2. Calculate the bounding box 
+        float xMax = (std::max)({gl_coord[0].x, gl_coord[1].x, gl_coord[2].x});
+        float xMin = (std::min)({gl_coord[0].x, gl_coord[1].x, gl_coord[2].x});
+        float yMax = (std::max)({gl_coord[0].y, gl_coord[1].y, gl_coord[2].y});
+        float yMin = (std::min)({gl_coord[0].y, gl_coord[1].y, gl_coord[2].y});
+
+        xMax = (std::min)(xMax, fw -1.f );
+        xMin = (std::max)(xMin, 0.f);
+        yMax = (std::min)(yMax, fh -1.f );
+        yMin = (std::max)(yMin, 0.f);
+
+        int x = 0;
+        int y = 0;
+
+        // Traverse the pixels in the bounding box 
+        for( x=(int)xMin; x<int(xMax+1); x++)
         {
-            // Calculate the center of gravity triangle 
-            vec2f current_pixel = vec2f(x,y);
-            vec2f A = vec2f(gl_coord[0].x,gl_coord[0].y);
-            vec2f B = vec2f(gl_coord[1].x,gl_coord[1].y);
-            vec2f C = vec2f(gl_coord[2].x,gl_coord[2].y);
-            vec3f weight = barycentric(A,B,C,current_pixel);
+            for( y=(int)yMin; y<int(yMax+1); y++)
+            {
+                // Calculate the center of gravity triangle 
+                vec2f current_pixel = vec2f(x,y);
+                vec2f A = vec2f(gl_coord[0].x,gl_coord[0].y);
+                vec2f B = vec2f(gl_coord[1].x,gl_coord[1].y);
+                vec2f C = vec2f(gl_coord[2].x,gl_coord[2].y);
+                vec3f weight = barycentric(A,B,C,current_pixel);
 
-            // Pixels not inside the triangle are skipped 
-            if( weight.x<0 || weight.y<0 || weight.z< 0 ) 
-                continue;
+                // Pixels not inside the triangle are skipped 
+                if( weight.x<0 || weight.y<0 || weight.z< 0 ) 
+                    continue;
 
-            // Depth interpolation is non-linear 
-            // because there is no perspective correction 
-            float currentDepth = weight.x * gl_coord[0].z
-                                 + weight.y * gl_coord[1].z
-                                 + weight.z * gl_coord[2].z;
+                // Depth interpolation is non-linear 
+                // because there is no perspective correction 
+                float currentDepth = weight.x * gl_coord[0].z
+                                     + weight.y * gl_coord[1].z
+                                     + weight.z * gl_coord[2].z;
 
-            // Depth test 
-            if( currentDepth > zbuffer[y*img->w()+x] ) 
-                continue;
+                // Depth test 
+                if( currentDepth > zbuffer[y*img->w()+x] ) 
+                    continue;
 
-            // Depth sorting 
-            zbuffer[y*img->w()+x] = currentDepth;
+                // Depth sorting 
+                zbuffer[y*img->w()+x] = currentDepth;
 
-            // Perspective correction interpolation 
-            float weight0 = re_w[0] * weight.x;
-            float weight1 = re_w[1] * weight.y;
-            float weight2 = re_w[2] * weight.z;
-            vec3f lerpWeight = vec3f(weight0,weight1,weight2);
-            Color fragmenCol = shader.fragment(lerpWeight);
-            
-            setPixel(x,y,fragmenCol);
+                // Perspective correction interpolation 
+                float weight0 = re_w[0] * weight.x;
+                float weight1 = re_w[1] * weight.y;
+                float weight2 = re_w[2] * weight.z;
+                vec3f lerpWeight = vec3f(weight0,weight1,weight2);
+                Color fragmenCol = shader.fragment(lerpWeight);
+                
+                setPixel(x,y,fragmenCol);
+            }
         }
     }
+    
+    if ( drawline == true )
+    {
+        vec2i xy1;
+        vec2i xy2;
+        size_t lq = 0;
+        
+        for( size_t cj=0; cj<3; cj++ )
+        {
+            xy1 = { (int)(gl_coord[lq].x), (int)(gl_coord[lq].y)};
+            
+            lq++;
+            if ( lq == 2 ) lq = 0;
+            
+            xy2 = {(int)(gl_coord[lq].x), (int)(gl_coord[lq].y)};
+            
+#ifdef DEBUG_LINE_TRACE
+            printf( "drawline( %d, %d, %d, %d ) ... \n",
+                    xy1.x, xy1.y, xy2.x, xy2.y );
+#endif                 
+            drawLine( xy1, xy2, linecolor );
+        }
+    }
+    
 }
 
 vec3f renderContext::barycentric(vec2f A,vec2f B,vec2f C,vec2f P)
@@ -603,10 +725,20 @@ inline void renderContext::setPixel(const int & x,const int & y,const Color & co
 
 void renderContext::drawLine(const vec2i & p0,const vec2i & p1,const Color & col)
 {
+    if ( img == NULL )
+        return;
+    
     int x0 = p0.x; 
     int x1 = p1.x;
     int y0 = p0.y; 
     int y1 = p1.y;
+#ifdef USE_FL_IMGTK
+    ulong flcol =   ( ( col.r & 0x000000FF ) << 24 )
+                  | ( ( col.g & 0x000000FF ) << 16 ) 
+                  | ( ( col.b & 0x000000FF ) << 8 )
+                  | ( col.a & 0x000000FF );
+    fl_imgtk::draw_smooth_line( img, x0, y0, x1, y1, flcol );
+#else ///     
     bool steep = false;
         
     if (std::abs( x0 - x1 ) < std::abs( y0 - y1 ))
@@ -647,5 +779,5 @@ void renderContext::drawLine(const vec2i & p0,const vec2i & p1,const Color & col
             d -= dx * 2;
         }
     }
+#endif
 }
-

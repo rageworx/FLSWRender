@@ -32,7 +32,7 @@ TESTSRCS += $(DIR_TST)perfmon.cpp
 TESTSRCS += $(DIR_TST)main.cpp
 TESTOBJS  = $(TESTSRCS:$(DIR_TST)%.cpp=$(DIR_TST)%.o)
 
-DEFS += -DCORRECTING_SHADOW
+DEFS += -DCORRECTING_SHADOW -DUSE_FL_IMGTK
 OPTS  =
 LOPTS =
 
@@ -64,20 +64,20 @@ CLFAGS += -ffast-math
 CFLAGS += -I$(DIR_SRC)
 CFLAGS += -I../fl_imgtk/lib
 CFLAGS += $(FLTK_ICFG)
-#CFLAGS += -Os
-CFLAGS += -g
+CFLAGS += -Os
+#CFLAGS += -g
 
 LFLAGS += $(LOPTS)
 LFLAGS += -L../fl_imgtk/lib
 LFLAGS += -l$(FLIMGTKL)
 LFLAGS += $(FLTK_LCFG)
-#LFLAGS += -fomit-frame-pointer
-LFLAGS += -g
+LFLAGS += -fomit-frame-pointer
+#LFLAGS += -g
 
 .PHONY: clean prepare test cleantest
 
 all: prepare $(TARGET)
-cleanall: clean cleantest
+cleanall: cleantest clean
 
 prepare:
 	@mkdir -p $(DIR_OBJ)
@@ -108,6 +108,6 @@ $(TESTOBJS): $(DIR_TST)%.o: $(DIR_TST)%.cpp
 	@echo "Building $@ ... "
 	@$(GXX) $(CFLAGS) -c $< -o $@
 
-test: $(TESTOBJS) $(TARGET) 
+test: $(TARGET) $(TESTOBJS)
 	@echo "Generating test ..."
 	@$(GXX) $(TESTOBJS) $(CFLAGS) -I$(DIR_TST) $(LFLAGS) -Llib -l$(NAME_B) -o $(TESTBIN)

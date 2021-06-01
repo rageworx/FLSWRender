@@ -26,11 +26,22 @@ class FLSWRenderer
         bool LoadObjectsIndir( const char* objdata = NULL, size_t datalen = 0 );
         bool LoadTexture( const char* txtfn = NULL );
         bool LoadTexture( Fl_RGB_Image* img );
-        bool Render();
+        bool Render( bool earsebuff = true );
         
     public:
         void color( unsigned color );
         unsigned color();
+        void linecolor( unsigned color );
+        unsigned linecolor();
+        void line( bool onoff );
+        bool line();
+        void texture( bool onoff );
+        bool texture();
+
+    public: /// vertex, faces, normals --
+        size_t vertexs();
+        size_t faces();
+        size_t texturecoords();
 
     public: /// object modifiers
         vec3f* shift();
@@ -54,6 +65,9 @@ class FLSWRenderer
     protected:
         Fl_RGB_Image*   rtarget;
         unsigned        defaultcolor;
+        unsigned        dlinecolor;
+        bool            drawline;
+        bool            drawtexture;
         
     private:
         void*           ctx;

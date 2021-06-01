@@ -30,9 +30,18 @@ float*              renFOV = NULL;
 float*              renFar = NULL;
 float*              renNear = NULL;
 
+// object info
+size_t              vertexs  = 0;
+size_t              faces    = 0;
+size_t              textures = 0;
+
 #ifdef TEST_UPSCALING
 static float fsaa_ratio  = 1.5f;
 #endif // TEST_UPSCALING
+
+#define DEF_COLOR_OBJECT                0xFF3333FF
+#define DEF_COLOR_LINE_W_TEXTURE        0xC0C0FF4F
+#define DEF_COLOR_LINE_ONLY             0xFFFFFFFF
 
 #define SETDATA(_x_,...)    if(_x_!=NULL) *_x_ = { __VA_ARGS__ }
 
@@ -77,18 +86,25 @@ void updateRender()
         renderbox->damage( 0 );
 
         snprintf( statestring, 1024,
-                  " - move    : %.3f,%.3f,%.3f\n"
-                  " - rotate  : %.3f,%.3f,%.3f\n"
-                  " - scale   : %.3f,%.3f,%.3f\n"
-                  " - light   : %.3f,%.3f,%.3f\n"
-                  " - eye     : %.3f,%.3f,%.3f\n"
-                  " - look    : %.3f,%.3f,%.3f\n"
-                  " - apsect ratio : %.3f\n"
-                  " - FOV          : %.3f\n"
-                  " - Far plane    : %.3f\n"
-                  " - Near plane   : %.3f\n"
+                  " - vertex count   : %lu\n"
+                  " - face count     : %lu\n"
+                  " - texture coords : %lu\n"
+                  " - move           : %.3f,%.3f,%.3f\n"
+                  " - rotate         : %.3f,%.3f,%.3f\n"
+                  " - scale          : %.3f,%.3f,%.3f\n"
+                  " - light position : %.3f,%.3f,%.3f\n"
+                  " - eye (camera)   : %.3f,%.3f,%.3f\n"
+                  " - look at        : %.3f,%.3f,%.3f\n"
+                  " - apsect ratio   : %.3f\n"
+                  " - FOV            : %.3f\n"
+                  " - Far plane      : %.3f\n"
+                  " - Near plane     : %.3f\n"
+                  " -----------------------------------\n"
                   " - Draw Perf.   : %lu ms.\n"
                   ,
+                  vertexs,
+                  faces,
+                  textures,
                   objMove->x, objMove->y, objMove->z,
                   objRotate->x, objRotate->y, objRotate->z,
                   objScale->x, objScale->y, objScale->z,
@@ -185,6 +201,31 @@ int fl_keyhandle( int e )
                     updateRender();
                 }
                 break;
+                
+            case 108: /// 'l'
+                if ( renderer != NULL )
+                {
+                    if ( renderer->line() == true )
+                    {
+                        renderer->line( false );
+                    }
+                    else
+                    {
+                        renderer->line( true );
+                        
+                        if ( renderer->texture() == true )
+                        {
+                            renderer->linecolor( DEF_COLOR_LINE_W_TEXTURE );
+                        }
+                        else
+                        {
+                            renderer->linecolor( DEF_COLOR_LINE_ONLY );
+                        }
+                    }
+                    
+                    updateRender();
+                }
+                break;            
 
             case 115: /// 's'
                 if ( objMove != NULL )
@@ -192,6 +233,24 @@ int fl_keyhandle( int e )
                     if ( objMove->y < 3.f )
                         objMove->y += 0.04f;
                        
+                    updateRender();
+                }
+                break;
+                
+            case 116: /// 't'
+                if ( renderer != NULL )
+                {
+                    if ( renderer->texture() == true )
+                    {
+                        renderer->texture( false );
+                        renderer->linecolor( DEF_COLOR_LINE_ONLY );
+                    }
+                    else
+                    {
+                        renderer->texture( true );
+                        renderer->linecolor( DEF_COLOR_LINE_W_TEXTURE );                        
+                    }
+                    
                     updateRender();
                 }
                 break;
@@ -223,9 +282,10 @@ int main( int argc, char** argv )
     window = new Fl_Double_Window ( refw, refh, "FLTK Software renderer demo, (C)2021 Raphael Kim" );
     renderbox = new Fl_Box( 0, 0, refw, refh );
 
-    helpbox = new Fl_Box( 10, 10, refw, 70, 
+    helpbox = new Fl_Box( 10, 10, refw, 120, 
               "object movement : W,A,S,D keys\n"
-              "object rotate/scaling : left, right, up and down arrow keys" );
+              "object rotate/scaling : left, right, up and down arrow keys\n"
+              "T : texture on/off, L : line on/off" );
     if ( helpbox != NULL )
     {
         helpbox->box( FL_NO_BOX );
@@ -235,7 +295,7 @@ int main( int argc, char** argv )
         helpbox->labelsize( 30 );
     }
 
-    statebox = new Fl_Box( 20, 100, refw/2, refh - 100 );
+    statebox = new Fl_Box( 20, 140, refw/2, refh - 140 );
     if ( statebox != NULL )
     {
         statebox->box( FL_NO_BOX );
@@ -264,7 +324,8 @@ int main( int argc, char** argv )
     
     if ( renderer != NULL )
     {
-        renderer->color( 0xFF3333FF );
+        renderer->color( DEF_COLOR_OBJECT );
+        renderer->linecolor( DEF_COLOR_LINE_W_TEXTURE );
         renderer->LoadObjects( "model/diablo3_pose.obj" );
         renderer->LoadTexture( "model/diablo3_pose.png" );
     }
@@ -282,6 +343,11 @@ int main( int argc, char** argv )
     renFOV = renderer->FOV();
     renFar = renderer->FarPlane();
     renNear = renderer->NearPlane();
+    
+    // some informations
+    vertexs = renderer->vertexs();
+    faces = renderer->faces();
+    textures = renderer->texturecoords();
 
     // setting up
     SETDATA(objMove,    0.f,0.f,0.f);
@@ -292,7 +358,7 @@ int main( int argc, char** argv )
     SETDATA(renEye,     0.0f,0.0f,-3.0f);
     SETDATA(renAt,      0.0f,0.0f,0.0f);
     SETDATA(renUp,      0.0f,1.0f,0.0f);
-    
+        
     updateRender();
     window->show();
     

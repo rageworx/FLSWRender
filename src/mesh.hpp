@@ -5,10 +5,7 @@
 #include "FLSWRenderMath.H"
 
 struct Mesh
-{
-    size_t numVertex;
-    size_t numFaces;
-    
+{    
     std::vector<vec3f> vertexs;
     std::vector<vec3f> vertexTextures;
     std::vector<vec3f> vertexsNormal;

@@ -86,11 +86,10 @@ bool ObjParser::ParseMesh(const char* path, Mesh* mesh)
         }
     }
     
-    mesh->numVertex = mesh->vertexs.size();
-    mesh->numFaces = mesh->faceVertexIndex.size();
-
 #ifdef DEBUG
-    printf( "vertexes : %lu, faces : %lu\n", mesh->numVertex, mesh->numFaces );
+    printf( "vertexes : %lu, faces : %lu\n", 
+            mesh->vertexs.size(), 
+            mesh->faceVertexIndex.size() );
 #endif /// of DEBUG
 
     in.clear();
@@ -187,12 +186,11 @@ bool ObjParser::ParseMesh(const char* data, size_t datalen, Mesh* mesh )
             mesh->faceNormalIndex.push_back(vec3i(tmp[2]));
         }
     }
-    
-    mesh->numVertex = mesh->vertexs.size();
-    mesh->numFaces = mesh->faceVertexIndex.size();
 
 #ifdef DEBUG
-    printf( "vertexes : %lu, faces : %lu\n", mesh->numVertex, mesh->numFaces );
+    printf( "vertexes : %lu, faces : %lu\n", 
+            mesh->vertexs.size(),
+            mesh->faceVertexIndex.size() );
 #endif /// of DEBUG
     
     return true;    

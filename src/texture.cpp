@@ -85,7 +85,7 @@ Color Texture::GetPixel(float u,float v)
 
         // where alpha belongs ... ?
     }
-#else /// testing with error to bilinear filter-        
+#else /// testing with error to bilinear filter ( do not eable it )
     float xerr = (u * (width-1)) - (float)x;
     float yerr = (v * (height-1)) - (float)y;
     
