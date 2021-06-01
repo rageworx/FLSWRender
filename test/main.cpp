@@ -53,7 +53,7 @@ void updateRender()
     if ( renderer != NULL )
     {
         perf.SetMonStart();
-        renderer->Render();
+        renderer->Render( true );
         perf.SetMonStop();
         unsigned long perfms = perf.GetPerfMS();
         

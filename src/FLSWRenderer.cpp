@@ -353,7 +353,10 @@ bool FLSWRenderer::Render( bool earsebuff )
 
         rctx->rasterizeTriangle( SV_Vertex, shader_texture );        
     }
-        
+    
+    // not sure this uncaching affects actual result.
+    //rtarget->uncache();
+
     return true;
 }
 
@@ -584,7 +587,7 @@ void renderContext::clearBuffer( bool earsebuff )
         #pragma omp parallel for
         for ( size_t cnt=0; cnt<=cmax; cnt++ )
         {
-            zbuffer[cnt] = 10000.0f;
+            zbuffer[cnt] = 1000000.f; /// was 10000.0f;
         }
     }
 }
