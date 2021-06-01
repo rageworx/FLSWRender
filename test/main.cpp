@@ -40,8 +40,8 @@ static float fsaa_ratio  = 1.5f;
 #endif // TEST_UPSCALING
 
 #define DEF_COLOR_OBJECT                0xFF3333FF
-#define DEF_COLOR_LINE_W_TEXTURE        0xC0C0FF4F
-#define DEF_COLOR_LINE_ONLY             0xFFFFFFFF
+#define DEF_COLOR_LINE_W_TEXTURE        0xC0C0FF40
+#define DEF_COLOR_LINE_ONLY             0xFFFFFF70
 
 #define SETDATA(_x_,...)    if(_x_!=NULL) *_x_ = { __VA_ARGS__ }
 
@@ -142,7 +142,7 @@ int fl_keyhandle( int e )
             case FL_Up:
                 if ( objScale != NULL )
                 {
-                    if ( objScale->x < 3.6f )
+                    if ( objScale->x < 3.20f )
                         *objScale = *objScale * 1.01f;
                     
                     updateRender();
