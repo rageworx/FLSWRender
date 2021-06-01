@@ -49,6 +49,7 @@ else ifeq ($(ARCH_S),Linux)
 	OPTS  += -std=c++11
     OPTS  += -fopenmp
 	LOPTS += -s
+	LOPTS += -mtune=native
 else
 	ARCH_SS = $(shell echo $(ARCH_S) | cut -d _ -f1)
 	ifeq ($(ARCH_SS),MINGW64)
@@ -64,7 +65,7 @@ CLFAGS += -ffast-math
 CFLAGS += -I$(DIR_SRC)
 CFLAGS += -I../fl_imgtk/lib
 CFLAGS += $(FLTK_ICFG)
-CFLAGS += -Os
+CFLAGS += -O3
 #CFLAGS += -g
 
 LFLAGS += $(LOPTS)
