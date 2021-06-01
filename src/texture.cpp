@@ -58,6 +58,7 @@ Color Texture::GetPixel(float u,float v)
 {
     if(u>1.f||v>1.f||u<0.f||v<0.f)
     {
+        // returns no color (by alpha is zero )
         return Color(0, 0, 0, 0);
     }
 

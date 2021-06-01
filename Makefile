@@ -55,7 +55,7 @@ else
 	ifeq ($(ARCH_SS),MINGW64)
 		OPTS  += -mwindows
         OPTS  += -fopenmp
-		LOPTS += -s -static
+		LOPTS += -s -static -mtune=native
 	endif
 endif
 
