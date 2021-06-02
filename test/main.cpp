@@ -35,6 +35,9 @@ size_t              vertexs  = 0;
 size_t              faces    = 0;
 size_t              textures = 0;
 
+// auto demo
+bool                timerdemo = false;
+
 #ifdef TEST_UPSCALING
 static float fsaa_ratio  = 1.5f;
 #endif // TEST_UPSCALING
@@ -131,6 +134,37 @@ void updateRender()
 #endif
 }
 
+void resetobj()
+{
+    SETDATA(objMove,    0.f,0.f,0.f);
+    SETDATA(objRotate,  0.f, 180.f ,180.f);
+    SETDATA(objScale,   2.f,2.f,2.f);
+
+    SETDATA(renLight,   0.0f,0.0f,-1.0f);
+    SETDATA(renEye,     0.0f,0.0f,-3.0f);
+    SETDATA(renAt,      0.0f,0.0f,0.0f);
+    SETDATA(renUp,      0.0f,1.0f,0.0f);
+}
+
+void fl_timercb( void* p )
+{
+    if ( p != NULL )
+    {
+        if ( timerdemo == true )
+        {
+            if ( objRotate != NULL )
+            {
+                if ( objRotate->y > -360.f )
+                    objRotate->y -= 2.f;
+                
+                updateRender();
+
+                Fl::repeat_timeout( 0.025f, fl_timercb, &window );
+            }
+        }
+    }
+}
+
 int fl_keyhandle( int e )
 {
     if ( e == FL_SHORTCUT )
@@ -152,7 +186,8 @@ int fl_keyhandle( int e )
             case FL_Left:
                 if ( objRotate != NULL )
                 {
-                    objRotate->y += 2.f;
+                    if ( objRotate->y < 360.f )
+                        objRotate->y += 2.f;
                     
                     updateRender();
                 }
@@ -161,7 +196,8 @@ int fl_keyhandle( int e )
             case FL_Right:
                 if ( objRotate != NULL )
                 {
-                    objRotate->y -= 2.f;
+                    if ( objRotate->y > -360.f )
+                        objRotate->y -= 2.f;
                     
                     updateRender();
                 }
@@ -174,6 +210,18 @@ int fl_keyhandle( int e )
                         *objScale = *objScale * 0.99f;
                     
                     updateRender();
+                }
+                break;
+
+            case 49: /// '1'
+                if ( timerdemo == true )
+                {
+                    timerdemo = false;
+                }
+                else
+                {
+                    timerdemo = true;
+                    Fl::repeat_timeout( 0.025f, fl_timercb, &window );
                 }
                 break;
                 
@@ -230,7 +278,15 @@ int fl_keyhandle( int e )
                     
                     updateRender();
                 }
-                break;            
+                break;
+                
+            case 114: /// 'r'
+                if ( objMove != NULL )
+                {
+                    resetobj();
+                    updateRender();
+                }
+                break;
 
             case 115: /// 's'
                 if ( objMove != NULL )
@@ -355,20 +411,18 @@ int main( int argc, char** argv )
     textures = renderer->texturecoords();
 
     // setting up
-    SETDATA(objMove,    0.f,0.f,0.f);
-    SETDATA(objRotate,  0.f, 180.f ,180.f);
-    SETDATA(objScale,   2.f,2.f,2.f);
-
-    SETDATA(renLight,   0.0f,0.0f,-1.0f);
-    SETDATA(renEye,     0.0f,0.0f,-3.0f);
-    SETDATA(renAt,      0.0f,0.0f,0.0f);
-    SETDATA(renUp,      0.0f,1.0f,0.0f);
-        
+    resetobj();
+       
     updateRender();
     window->show();
+
+    // register timer
+    Fl::add_timeout( 0.025f, fl_timercb, NULL );
     
     int ret = Fl::run();
     
+    Fl::remove_timeout( fl_timercb );
+
     delete rendermux;
     delete renderbg;
     delete rendersurface;
