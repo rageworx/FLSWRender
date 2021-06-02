@@ -38,25 +38,24 @@ LOPTS =
 
 # Architecture reconfiguration ...
 ifeq ($(ARCH_S),Darwin)
-	GCC = llvm-gcc
-	CXX = llvm-g++
-
-	ifeq ($(shell test $(ARCH_R) -gt 19; echo $$?),0)
-		OPTS += -arch x86_64 -arch arm64
-	endif
-	OPTS  += -std=c++11
+    GCC = llvm-gcc
+    CXX = llvm-g++
+    ifeq ($(shell test $(ARCH_R) -gt 19; echo $$?),0)
+        OPTS += -arch x86_64 -arch arm64
+    endif
+    OPTS  += -std=c++11
 else ifeq ($(ARCH_S),Linux)
-	OPTS  += -std=c++11
+    OPTS  += -std=c++11
     OPTS  += -fopenmp
-	LOPTS += -s
-	LOPTS += -mtune=native
+    LOPTS += -s
+    LOPTS += -mtune=native
 else
-	ARCH_SS = $(shell echo $(ARCH_S) | cut -d _ -f1)
-	ifeq ($(ARCH_SS),MINGW64)
-		OPTS  += -mwindows
+    ARCH_SS = $(shell echo $(ARCH_S) | cut -d _ -f1)
+    ifeq ($(ARCH_SS),MINGW64)
+        OPTS  += -mwindows
         OPTS  += -fopenmp
-		LOPTS += -s -static -mtune=native
-	endif
+        LOPTS += -s -static -mtune=native
+    endif
 endif
 
 CFLAGS += $(DEFS)
@@ -65,7 +64,7 @@ CLFAGS += -ffast-math
 CFLAGS += -I$(DIR_SRC)
 CFLAGS += -I../fl_imgtk/lib
 CFLAGS += $(FLTK_ICFG)
-CFLAGS += -O3
+CFLAGS += -O2
 #CFLAGS += -g
 
 LFLAGS += $(LOPTS)
