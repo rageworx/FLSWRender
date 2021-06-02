@@ -325,8 +325,13 @@ bool FLSWRenderer::Render( bool earsebuff )
         {
             triangleVertex[cj] = \
                 rctx->mesh->vertexs[rctx->mesh->faceVertexIndex[cnt].raw[cj] -1];
+            // how to prevent vertex normal-less ?
+            if ( rctx->mesh->vertexsNormal.size() > 0 )
             triangleNormal[cj] = \
                 rctx->mesh->vertexsNormal[rctx->mesh->faceNormalIndex[cnt].raw[cj] -1];
+            // how to prevent texture less ?
+            if ( ( cnt < rctx->mesh->faceTextureIndex.size() )
+                 && ( rctx->mesh->vertexTextures.size() >0 ) )
             triangleUv[cj]     = \
                 rctx->mesh->vertexTextures[rctx->mesh->faceTextureIndex[cnt].raw[cj] -1];
         }
