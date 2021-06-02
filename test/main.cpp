@@ -44,7 +44,7 @@ static float fsaa_ratio  = 1.5f;
 
 #define DEF_COLOR_OBJECT                0xFF3333FF
 #define DEF_COLOR_LINE_W_TEXTURE        0xC0C0FF40
-#define DEF_COLOR_LINE_ONLY             0xFFFFFF70
+#define DEF_COLOR_LINE_ONLY             0xFFFFFF90
 
 #define SETDATA(_x_,...)    if(_x_!=NULL) *_x_ = { __VA_ARGS__ }
 
@@ -137,8 +137,8 @@ void updateRender()
 void resetobj()
 {
     SETDATA(objMove,    0.f,0.f,0.f);
-    SETDATA(objRotate,  0.f, 180.f ,180.f);
-    SETDATA(objScale,   2.f,2.f,2.f);
+    SETDATA(objRotate,  0.f,0.f,0.f);
+    SETDATA(objScale,   1.5f,1.5f,1.5f);
 
     SETDATA(renLight,   0.0f,0.0f,-1.0f);
     SETDATA(renEye,     0.0f,0.0f,-3.0f);

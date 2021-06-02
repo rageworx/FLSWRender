@@ -40,7 +40,8 @@ bool ObjParser::ParseMesh(const char* path, Mesh* mesh)
             {
                 float tmp;
                 ssline >> tmp;
-                vert.raw[i] = tmp;
+                // strange, actual coorddination must be negative.
+                vert.raw[i] = -tmp;
             }
             mesh->vertexs.push_back(vert);
         }

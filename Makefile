@@ -65,7 +65,7 @@ CFLAGS += -I$(DIR_SRC)
 CFLAGS += -I../fl_imgtk/lib
 CFLAGS += $(FLTK_ICFG)
 CFLAGS += -O2
-#CFLAGS += -g
+#CFLAGS += -g -DDEBUG
 
 LFLAGS += $(LOPTS)
 LFLAGS += -L../fl_imgtk/lib

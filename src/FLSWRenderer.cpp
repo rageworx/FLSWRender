@@ -580,14 +580,20 @@ void renderContext::clearBuffer( bool earsebuff )
     {
         size_t cmax = img->w() * img->h();
         uchar* buff = (uchar*)img->data()[0];
-        
+#ifdef DEBUG
+        printf( "cmax = %d x %d = %lu\n",
+                img->w(), img->h(), cmax );
+#endif
         if ( earsebuff == true )
             memset( buff, 0, cmax * img->d() );
         
-        #pragma omp parallel for
-        for ( size_t cnt=0; cnt<=cmax; cnt++ )
+        if ( zbuffer != NULL )
         {
-            zbuffer[cnt] = 1000000.f; /// was 10000.0f;
+            #pragma omp parallel for
+            for ( size_t cnt=0; cnt<cmax; cnt++ )
+            {
+                zbuffer[cnt] = 100000.f; /// was 10000.0f;
+            }
         }
     }
 }
@@ -675,16 +681,11 @@ void renderContext::rasterizeTriangle(vec4f SV_vertexs[3],Shader& shader)
     {
         vec2i xy1;
         vec2i xy2;
-        size_t lq = 0;
         
         for( size_t cj=0; cj<3; cj++ )
         {
-            xy1 = { (int)(gl_coord[lq].x), (int)(gl_coord[lq].y)};
-            
-            lq++;
-            if ( lq == 2 ) lq = 0;
-            
-            xy2 = {(int)(gl_coord[lq].x), (int)(gl_coord[lq].y)};
+            xy1 = {(int)(gl_coord[cj].x), (int)(gl_coord[cj].y)};
+            xy2 = {(int)(gl_coord[cj%2].x), (int)(gl_coord[cj%2].y)};
             
 #ifdef DEBUG_LINE_TRACE
             printf( "drawline( %d, %d, %d, %d ) ... \n",
