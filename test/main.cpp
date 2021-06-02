@@ -156,6 +156,8 @@ void fl_timercb( void* p )
             {
                 if ( objRotate->y > -360.f )
                     objRotate->y -= 2.f;
+                else
+                    objRotate->y = 360.f;
                 
                 updateRender();
 
