@@ -142,7 +142,7 @@ bool ObjParser::ParseMesh(const char* data, size_t datalen, Mesh* mesh )
             {
                 float tmp;
                 ssline >> tmp;
-                vert.raw[i] = tmp;
+                vert.raw[i] = -tmp;
             }
             mesh->vertexs.push_back(vert);
         }
