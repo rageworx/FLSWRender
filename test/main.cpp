@@ -171,47 +171,68 @@ int fl_keyhandle( int e )
 {
     if ( e == FL_SHORTCUT )
     {
+        bool oredraw = false;
         int key = Fl::event_key();
 
         switch( key )
         {
             case FL_Up:
+                if ( objRotate != NULL )
+                {
+                    if ( objRotate->x > -360.f )
+                        objRotate->x -= 2.f;
+                    else
+                        objRotate->x = 360.f;
+                    oredraw = true;
+                }
+                break;
+
+            case FL_Down:
+                if ( objRotate != NULL )
+                {
+                    if ( objRotate->x < 360.f )
+                        objRotate->x += 2.f;
+                    else
+                        objRotate->x = -360.f;
+                    oredraw = true;
+                }
+                break;
+
+            case (unsigned)'=':
+            case (unsigned)'+':
                 if ( objScale != NULL )
                 {
                     if ( objScale->x < 3.20f )
                         *objScale = *objScale * 1.01f;
-                    
-                    updateRender();
+                    oredraw = true;
+                }
+                break;
+
+            case FL_Right:
+                if ( objRotate != NULL )
+                {
+                    if ( objRotate->y < 360.f )
+                        objRotate->y += 2.f;
+                    oredraw = true;
                 }
                 break;
                 
             case FL_Left:
                 if ( objRotate != NULL )
                 {
-                    if ( objRotate->y < 360.f )
-                        objRotate->y += 2.f;
-                    
-                    updateRender();
-                }
-                break;
-                
-            case FL_Right:
-                if ( objRotate != NULL )
-                {
                     if ( objRotate->y > -360.f )
                         objRotate->y -= 2.f;
-                    
-                    updateRender();
+                    oredraw = true;
                 }
                 break;
             
-            case FL_Down:
+            case (unsigned)'-':
+            case (unsigned)'_':
                 if ( objScale != NULL )
                 {
                     if ( objScale->x > 0.f )
                         *objScale = *objScale * 0.99f;
-                    
-                    updateRender();
+                    oredraw = true;
                 }
                 break;
 
@@ -223,7 +244,11 @@ int fl_keyhandle( int e )
                 else
                 {
                     timerdemo = true;
-                    Fl::repeat_timeout( 0.025f, fl_timercb, &window );
+                    // MacOS has some issue on timer.
+                    if ( Fl::has_timeout( fl_timercb, &window ) != 0 )
+                        Fl::repeat_timeout( 0.025f, fl_timercb, &window );
+                    else
+                        Fl::add_timeout( 0.025f, fl_timercb, &window );
                 }
                 break;
                 
@@ -232,8 +257,7 @@ int fl_keyhandle( int e )
                 {
                     if ( objMove->y > -3.f )
                         objMove->y -= 0.04f;
-                       
-                    updateRender();
+                    oredraw = true;
                 }
                 break;
 
@@ -242,8 +266,7 @@ int fl_keyhandle( int e )
                 {
                     if ( objMove->x < 3.f )
                         objMove->x += 0.04f;
-                        
-                    updateRender();
+                    oredraw = true;
                 }
                 break;
 
@@ -252,8 +275,7 @@ int fl_keyhandle( int e )
                 {
                     if ( objMove->x > -3.f )
                         objMove->x -= 0.04f;
-                        
-                    updateRender();
+                    oredraw = true;
                 }
                 break;
                 
@@ -277,8 +299,8 @@ int fl_keyhandle( int e )
                             renderer->linecolor( DEF_COLOR_LINE_ONLY );
                         }
                     }
-                    
-                    updateRender();
+
+                    oredraw = true;
                 }
                 break;
                 
@@ -286,7 +308,7 @@ int fl_keyhandle( int e )
                 if ( objMove != NULL )
                 {
                     resetobj();
-                    updateRender();
+                    oredraw = true;
                 }
                 break;
 
@@ -295,8 +317,8 @@ int fl_keyhandle( int e )
                 {
                     if ( objMove->y < 3.f )
                         objMove->y += 0.04f;
-                       
-                    updateRender();
+
+                    oredraw = true;
                 }
                 break;
                 
@@ -311,10 +333,10 @@ int fl_keyhandle( int e )
                     else
                     {
                         renderer->texture( true );
-                        renderer->linecolor( DEF_COLOR_LINE_W_TEXTURE );                        
+                        renderer->linecolor( DEF_COLOR_LINE_W_TEXTURE );
                     }
-                    
-                    updateRender();
+
+                    oredraw = true;
                 }
                 break;
                 
@@ -324,8 +346,13 @@ int fl_keyhandle( int e )
                     // quir program.
                     window->hide();
                 }
+                break;
 
         }
+
+        if ( oredraw == true )
+            updateRender();
+
         return 1;
     }
     
@@ -347,15 +374,15 @@ int main( int argc, char** argv )
 
     helpbox = new Fl_Box( 10, 10, refw, 120, 
               "object movement : W,A,S,D keys\n"
-              "object rotate/scaling : left, right, up and down arrow keys\n"
-              "T : texture on/off, L : line on/off" );
+              "object rotate/scaling : arrow keys, object scale : + and - key\n"
+              "texture on/off : t, line on/off : l, auto-rotate : 1, reset : r" );
     if ( helpbox != NULL )
     {
         helpbox->box( FL_NO_BOX );
         helpbox->align( FL_ALIGN_LEFT | FL_ALIGN_INSIDE );
         helpbox->labelcolor( 0xFF993300 );
         helpbox->labelfont( FL_HELVETICA );
-        helpbox->labelsize( 30 );
+        helpbox->labelsize( 28 );
     }
 
     statebox = new Fl_Box( 20, 140, refw/2, refh - 140 );
